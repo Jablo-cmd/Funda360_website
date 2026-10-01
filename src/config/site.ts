@@ -28,7 +28,7 @@ export const siteConfig = {
    * The Login CTA points to the existing Funda360 application.
    * The marketing site never authenticates anyone itself.
    */
-  appLoginUrl: process.env.NEXT_PUBLIC_APP_LOGIN_URL || 'https://funda360.aurisnexus.co.za/login',
+  appLoginUrl: process.env.NEXT_PUBLIC_APP_LOGIN_URL || 'https://app.funda360.aurisnexus.co.za/login',
 
   /** Request a Demo submission endpoint. Empty = not yet connected (Phase 1). */
   demoRequestEndpoint: process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT || '',
