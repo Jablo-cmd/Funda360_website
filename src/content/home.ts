@@ -11,13 +11,17 @@ export const homePage = {
 
   // 1. Hero
   hero: {
-    brand: 'FUNDA360',
-    heading: 'Smarter Schools. Better Outcomes.',
+    /** Brand tagline, shown as the eyebrow above the H1. */
+    brand: 'Smarter Schools. Better Outcomes.',
+    heading: 'The operating platform for modern schools.',
     intro:
-      'Funda360 is a connected school management platform. It brings learner records, academics, attendance, fees and communication together in one place, so school teams can manage daily work, understand what is happening and act where attention is needed.',
+      'Funda360 brings learners, educators, academics, administration, finance, communication and school performance into one connected platform.',
     primary: ctas.requestDemo,
-    secondary: ctas.explorePlatform,
+    secondary: ctas.exploreFunda360,
     shot: 'dashboard' as ProductShotKey,
+    phoneShot: 'parentPortal' as ProductShotKey,
+    /** Modules shown under the hero; the last one is the intelligence layer. */
+    modules: ['Learners', 'Academics', 'Attendance', 'Finance', 'Communication', 'Reporting'],
   },
 
   // 2. Introduction
@@ -25,6 +29,7 @@ export const homePage = {
     id: 'introduction',
     heading: 'What is Funda360?',
     body: [
+      'Funda360 is a connected school management platform. It brings learner records, academics, attendance, fees and communication together in one place, so school teams can manage daily work, understand what is happening and act where attention is needed.',
       'Funda360 is a web-based school management platform for schools and the people who lead, fund and support them.',
       'Administrators, teachers, finance teams, leadership, parents and learners each work in their own part of the platform, and all of them rely on the same connected school information.',
     ],
@@ -50,6 +55,18 @@ export const homePage = {
     intro:
       'In Funda360 the learner record sits at the centre. Classes, assessments, attendance, fees and communication all connect to it, so information captured once is available wherever it is needed, to the people allowed to see it.',
     link: { label: 'How the platform connects', href: '/platform#how-it-connects' },
+    center: { title: 'The learner record', note: 'At the centre of every school process' },
+    /** Eight connected areas, laid out around the learner record (row by row). */
+    nodes: [
+      { id: 'learner-management', label: 'Admissions & enrolment', href: '/platform/learner-management' },
+      { id: 'academics-curriculum', label: 'Classes & timetables', href: '/platform/academics-assessments' },
+      { id: 'assessments-results', label: 'Assessments & report cards', href: '/platform/academics-assessments' },
+      { id: 'attendance', label: 'Attendance', href: '/platform/attendance' },
+      { id: 'fees-finance', label: 'Fees & finance', href: '/platform/finance' },
+      { id: 'communication', label: 'Messages & notices', href: '/platform/communication' },
+      { id: 'portals', label: 'Parent & learner portals', href: '/platform#portals' },
+      { id: 'performance-analytics', label: 'Dashboards & reports', href: '/platform/analytics', insight: true },
+    ],
   },
 
   // 5. Manage → Understand → Act
@@ -62,6 +79,12 @@ export const homePage = {
       { title: 'Understand', description: 'See what is happening through role-based dashboards and reports built from the same records.' },
       { title: 'Act', description: 'Identify where attention may be needed and follow up, with alerts today and intelligence on the roadmap.' },
     ] satisfies Feature[],
+    /** Visual story: one real screen per step (presentation detail for the steps above). */
+    story: [
+      { step: 'manage', shot: 'detailRegister' as ProductShotKey, caption: 'A teacher takes the daily register.', link: { label: 'Explore Attendance', href: '/platform/attendance' } },
+      { step: 'understand', shot: 'detailTrend' as ProductShotKey, caption: 'The same registers become a school-wide trend.', link: { label: 'Explore Analytics & Reporting', href: '/platform/analytics' } },
+      { step: 'act', shot: 'detailAttention' as ProductShotKey, caption: 'A learner record shows what needs attention.', link: { label: 'Explore AI & Intelligence', href: '/ai' } },
+    ],
   },
 
   // 6. Capabilities: rendered from platformAreas
@@ -78,6 +101,16 @@ export const homePage = {
     heading: 'Inside Funda360',
     intro: 'A look at the platform school teams use every day.',
     shots: ['dashboard', 'learnerManagement', 'academicPerformance', 'attendance', 'analytics', 'reporting'] as ProductShotKey[],
+    /** Product tour tabs: real screens with short explanations. */
+    tour: [
+      { id: 'dashboard', label: 'Dashboard', shot: 'dashboard' as ProductShotKey, title: 'The school at a glance', body: 'Leadership sees learners, staff, classes, attendance and fee collection on one dashboard, built from the records teams work in every day.', link: { label: 'Analytics & Reporting', href: '/platform/analytics' } },
+      { id: 'learners', label: 'Learners', shot: 'learnerManagement' as ProductShotKey, title: 'One record for every learner', body: 'Enrolment, guardians, documents, consent, finances and attendance in a single profile, with gaps flagged for attention.', link: { label: 'Learner Management', href: '/platform/learner-management' } },
+      { id: 'assessments', label: 'Assessments', shot: 'academicPerformance' as ProductShotKey, title: 'Results captured once', body: 'Teachers capture marks per assessment; averages and ranges are calculated as they go and flow into report cards.', link: { label: 'Academics & Assessments', href: '/platform/academics-assessments' } },
+      { id: 'attendance', label: 'Attendance', shot: 'analytics' as ProductShotKey, title: 'From registers to trends', body: 'Daily registers roll up into an attendance report with a trend line, an attention threshold and alerts.', link: { label: 'Attendance', href: '/platform/attendance' } },
+      { id: 'finance', label: 'Finance', shot: 'finance' as ProductShotKey, title: 'A clear collection position', body: 'Billed, collected, outstanding and overdue amounts, the collection rate and balance ageing for the year.', link: { label: 'Fees & Finance', href: '/platform/finance' } },
+      { id: 'messages', label: 'Messages', shot: 'communication' as ProductShotKey, title: 'Conversations that stay with the school', body: 'Staff and guardians message each other inside Funda360, with group conversations for teams.', link: { label: 'Communication', href: '/platform/communication' } },
+      { id: 'report-cards', label: 'Report cards', shot: 'reporting' as ProductShotKey, title: 'Governed report cards', body: 'Report cards move through review and approval before they are published to families.', link: { label: 'Academics & Assessments', href: '/platform/academics-assessments' } },
+    ],
   },
 
   // 8. AI & Intelligence

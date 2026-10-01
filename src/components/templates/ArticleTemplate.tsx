@@ -6,12 +6,22 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { CtaBanner } from '@/components/ui/CtaBanner';
 import { JsonLd } from '@/components/ui/JsonLd';
 import { ArticleList } from '@/components/ui/ArticleList';
+import { LinkCardList } from '@/components/ui/LinkCardList';
 
+function initials(name: string) {
+  return name
+    .replace(/^The\s+/i, '')
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 /**
  * Article template: breadcrumb, category, title, summary, author,
- * publication date, reading time, body blocks, related platform pages,
- * related articles and CTA.
+ * publication date, reading time, body blocks, author, related platform
+ * pages, related articles and CTA.
  */
 export function ArticleTemplate({ article }: { article: Article }) {
   const author = getAuthor(article.authorId);
@@ -30,11 +40,14 @@ export function ArticleTemplate({ article }: { article: Article }) {
       />
 
       <article className="article" aria-labelledby="page-title">
-        <header className="hero">
+        <header className="article-header">
           <div className="container container--narrow">
             {article.status === 'draft' ? (
-              <p className="badge" data-availability="confirm">
-                Draft article: editorial review required before publication
+              <p className="article__draft">
+                <span className="badge" data-availability="confirm">
+                  Draft
+                </span>
+                <span className="meta"> Editorial review required before publication</span>
               </p>
             ) : null}
             {category ? (
@@ -71,41 +84,45 @@ export function ArticleTemplate({ article }: { article: Article }) {
           </div>
         </header>
 
-        <div className="container container--narrow article__body">
-          {/* Article hero image slot: supplied in Phase 2 with descriptive alt text. */}
+        <div className="container container--narrow article__body prose">
+          {/* Article hero image slot: add an editorial image with descriptive alt text when available. */}
           {article.body.map((block, index) => (
             <ArticleBlockView key={index} block={block} />
           ))}
         </div>
 
         <footer className="container container--narrow article__footer">
-          <section aria-labelledby="author-heading" className="item">
-            <h2 id="author-heading">About the author</h2>
-            <p>
-              <strong>{author.name}</strong>, {author.role}
-            </p>
-            <p>{author.bio}</p>
+          <section aria-labelledby="author-heading" className="item author-card">
+            <span className="author-card__avatar" aria-hidden="true">
+              {initials(author.name)}
+            </span>
+            <div>
+              <h2 id="author-heading">About the author</h2>
+              <p>
+                <strong>{author.name}</strong>, {author.role}
+              </p>
+              <p>{author.bio}</p>
+            </div>
           </section>
 
           {article.relatedPages?.length ? (
             <section aria-labelledby="related-pages-heading">
-              <h2 id="related-pages-heading">Related on Funda360</h2>
-              <ul className="bullets">
-                {article.relatedPages.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
+              <h2 id="related-pages-heading" className="eyebrow">
+                Related on Funda360
+              </h2>
+              <LinkCardList items={article.relatedPages.map((link) => ({ title: link.label, description: 'Explore this part of the platform.', href: link.href }))} />
             </section>
           ) : null}
         </footer>
       </article>
 
       {related.length ? (
-        <section className="section" aria-labelledby="related-articles-heading">
+        <section className="section" data-tone="muted" aria-labelledby="related-articles-heading">
           <div className="container">
-            <h2 id="related-articles-heading">Related articles</h2>
+            <header className="section__header">
+              <p className="eyebrow">Keep reading</p>
+              <h2 id="related-articles-heading">Related articles</h2>
+            </header>
             <ArticleList articles={related} />
           </div>
         </section>

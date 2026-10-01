@@ -14,10 +14,15 @@ export default function TermsPage() {
       <Breadcrumbs trail={[{ name: page.heading, path: '/terms' }]} />
       <section className="hero" aria-labelledby="page-title">
         <div className="container container--narrow">
+          <p className="eyebrow">Legal</p>
           <h1 id="page-title">Terms of use</h1>
-          <Placeholder>{page.placeholder}</Placeholder>
         </div>
       </section>
+      <div className="section">
+        <div className="container container--narrow prose">
+          <Placeholder>{page.placeholder}</Placeholder>
+        </div>
+      </div>
     </>
   );
 }

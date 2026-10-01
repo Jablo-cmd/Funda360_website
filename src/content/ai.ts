@@ -99,6 +99,16 @@ export const aiPage = {
       },
     ] satisfies Feature[],
   },
+  /** Roadmap concept, described in words (rendered as a labelled concept panel, never a mock screen). */
+  concept: {
+    title: 'Learner attention areas (concept)',
+    steps: [
+      'Bring together signals the school already records, such as attendance, assessment results and missing records.',
+      'Highlight learners and classes where attention may be needed, with the reasons shown.',
+      'Let teachers and leaders review, dismiss or follow up, keeping people in control.',
+    ],
+    note: 'Scope, timing and data use are not yet confirmed. Funda360 will publish its approach before any AI capability is released.',
+  },
   flow: {
     heading: 'From information to attention',
     steps: [

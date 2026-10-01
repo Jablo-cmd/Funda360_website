@@ -1,9 +1,11 @@
-import Link from 'next/link';
 import { ctas } from '@/content/ctas';
-import { articlesInCategory, categories, resourcesPage, sortedArticles } from '@/content/resources';
-import { ArticleList } from '@/components/ui/ArticleList';
+import { categories, articlesInCategory, resourcesPage, sortedArticles } from '@/content/resources';
+import { ArticleList, FeaturedArticle } from '@/components/ui/ArticleList';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { CategoryNav } from '@/components/ui/CategoryNav';
 import { CtaBanner } from '@/components/ui/CtaBanner';
+import { FeatureList } from '@/components/ui/FeatureList';
+import { LinkCardList } from '@/components/ui/LinkCardList';
 import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
 import { pageMetadata } from '@/lib/seo';
@@ -17,40 +19,40 @@ export default function ResourcesPage() {
   return (
     <>
       <Breadcrumbs trail={[{ name: 'Resources', path: '/resources' }]} />
-      <PageHero {...resourcesPage.hero} />
-
-      <Section id="categories" heading="Browse by category">
-        <nav aria-label="Resource categories">
-          <ul className="grid" role="list">
-            {categories.map((category) => (
-              <li key={category.slug} className="item">
-                <h3 className="item__title">
-                  <Link href={`/resources/category/${category.slug}`}>{category.name}</Link>
-                </h3>
-                <p>{category.description}</p>
-                <p className="meta">{articlesInCategory(category.slug).length} articles</p>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </Section>
+      <PageHero {...resourcesPage.hero}>
+        <div className="spaced-top">
+          <CategoryNav />
+        </div>
+      </PageHero>
 
       {featured ? (
-        <Section id="featured" heading="Featured insight">
-          <ArticleList articles={[featured]} />
+        <Section id="featured" eyebrow="Featured" heading="Featured insight">
+          <FeaturedArticle article={featured} />
         </Section>
       ) : null}
 
-      <Section id="latest" heading="Latest insights">
+      <Section id="latest" tone="muted" eyebrow="Latest" heading="Latest insights">
         <ArticleList articles={rest} />
       </Section>
 
-      <Section id="coming-soon" heading={resourcesPage.futureTypes.heading} intro={resourcesPage.futureTypes.intro}>
-        <ul className="bullets">
-          {resourcesPage.futureTypes.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+      <Section id="categories" eyebrow="Topics" heading="Browse by category">
+        <LinkCardList
+          columns={4}
+          items={categories.map((category) => ({
+            title: category.name,
+            description: category.description,
+            meta: `${articlesInCategory(category.slug).length} articles`,
+            href: `/resources/category/${category.slug}`,
+          }))}
+        />
+      </Section>
+
+      <Section id="coming-soon" tone="muted" eyebrow="Coming soon" heading={resourcesPage.futureTypes.heading} intro={resourcesPage.futureTypes.intro}>
+        <FeatureList
+          layout="checks"
+          columns={2}
+          items={resourcesPage.futureTypes.items.map((item) => ({ title: item, description: 'Planned resource type.', availability: 'roadmap' as const }))}
+        />
       </Section>
 
       <CtaBanner secondary={ctas.explorePlatform} />

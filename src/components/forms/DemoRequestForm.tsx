@@ -3,15 +3,7 @@
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { demoPage, interestOptions, roleOptions, sizeOptions } from '@/content/demo';
-import {
-  emptyDemoRequest,
-  submitDemoRequest,
-  validateDemoRequest,
-  type DemoRequest,
-  type DemoRequestErrors,
-  type DemoRequestField,
-  type SubmitResult,
-} from '@/lib/demoRequest';
+import { emptyDemoRequest, submitDemoRequest, validateDemoRequest, type DemoRequest, type DemoRequestErrors, type DemoRequestField, type SubmitResult } from '@/lib/demoRequest';
 
 type Status = { kind: 'idle' } | { kind: 'submitting' } | SubmitResultStatus;
 type SubmitResultStatus = { kind: SubmitResult['status']; message?: string };
@@ -81,8 +73,7 @@ export function DemoRequestForm() {
     requestAnimationFrame(() => statusRef.current?.focus());
   }
 
-  const describedBy = (field: DemoRequestField, hint = false) =>
-    [hint ? `demo-${field}-hint` : null, errors[field] ? `demo-${field}-error` : null].filter(Boolean).join(' ') || undefined;
+  const describedBy = (field: DemoRequestField, hint = false) => [hint ? `demo-${field}-hint` : null, errors[field] ? `demo-${field}-error` : null].filter(Boolean).join(' ') || undefined;
 
   const errorEntries = FIELD_ORDER.filter((f) => errors[f]).map((f) => [f, errors[f] as string] as const);
 
@@ -130,86 +121,86 @@ export function DemoRequestForm() {
           Fields marked (required) must be completed.
         </p>
 
-        <TextField id="demo-name" field="name" label="Full name" required autoComplete="name" value={data.name} error={errors.name} describedBy={describedBy('name')} onChange={(v) => update('name', v)} />
-
-        <TextField
-          id="demo-organisation"
-          field="organisation"
-          label="School or organisation"
-          required
-          autoComplete="organization"
-          value={data.organisation}
-          error={errors.organisation}
-          describedBy={describedBy('organisation')}
-          onChange={(v) => update('organisation', v)}
-        />
-
-        <TextField
-          id="demo-email"
-          field="email"
-          label="Work email address"
-          type="email"
-          required
-          autoComplete="email"
-          value={data.email}
-          error={errors.email}
-          describedBy={describedBy('email')}
-          onChange={(v) => update('email', v)}
-        />
-
-        <TextField
-          id="demo-phone"
-          field="phone"
-          label="Phone number (optional)"
-          type="tel"
-          autoComplete="tel"
-          hint="Include your country code if you are outside South Africa."
-          value={data.phone}
-          error={errors.phone}
-          describedBy={describedBy('phone', true)}
-          onChange={(v) => update('phone', v)}
-        />
-
-        <div className="field">
-          <label htmlFor="demo-role">Your role (required)</label>
-          <select
-            id="demo-role"
-            name="role"
+        <div className="form__row">
+          <TextField
+            id="demo-name"
+            field="name"
+            label="Full name"
             required
-            value={data.role}
-            aria-invalid={Boolean(errors.role)}
-            aria-describedby={describedBy('role')}
-            onChange={(e) => update('role', e.target.value)}
-          >
-            <option value="">Select your role</option>
-            {roleOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <FieldError field="role" error={errors.role} />
+            autoComplete="name"
+            value={data.name}
+            error={errors.name}
+            describedBy={describedBy('name')}
+            onChange={(v) => update('name', v)}
+          />
+
+          <TextField
+            id="demo-organisation"
+            field="organisation"
+            label="School or organisation"
+            required
+            autoComplete="organization"
+            value={data.organisation}
+            error={errors.organisation}
+            describedBy={describedBy('organisation')}
+            onChange={(v) => update('organisation', v)}
+          />
         </div>
 
-        <div className="field">
-          <label htmlFor="demo-size">Number of learners or schools (required)</label>
-          <select
-            id="demo-size"
-            name="size"
+        <div className="form__row">
+          <TextField
+            id="demo-email"
+            field="email"
+            label="Work email address"
+            type="email"
             required
-            value={data.size}
-            aria-invalid={Boolean(errors.size)}
-            aria-describedby={describedBy('size')}
-            onChange={(e) => update('size', e.target.value)}
-          >
-            <option value="">Select a size</option>
-            {sizeOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <FieldError field="size" error={errors.size} />
+            autoComplete="email"
+            value={data.email}
+            error={errors.email}
+            describedBy={describedBy('email')}
+            onChange={(v) => update('email', v)}
+          />
+
+          <TextField
+            id="demo-phone"
+            field="phone"
+            label="Phone number (optional)"
+            type="tel"
+            autoComplete="tel"
+            hint="Include your country code if you are outside South Africa."
+            value={data.phone}
+            error={errors.phone}
+            describedBy={describedBy('phone', true)}
+            onChange={(v) => update('phone', v)}
+          />
+        </div>
+
+        <div className="form__row form__row--end">
+          <div className="field">
+            <label htmlFor="demo-role">Your role (required)</label>
+            <select id="demo-role" name="role" required value={data.role} aria-invalid={Boolean(errors.role)} aria-describedby={describedBy('role')} onChange={(e) => update('role', e.target.value)}>
+              <option value="">Select your role</option>
+              {roleOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <FieldError field="role" error={errors.role} />
+          </div>
+
+          <div className="field">
+            <label htmlFor="demo-size">Number of learners or schools (required)</label>
+            <select id="demo-size" name="size" required value={data.size} aria-invalid={Boolean(errors.size)} aria-describedby={describedBy('size')} onChange={(e) => update('size', e.target.value)}>
+              <option value="">Select a size</option>
+              {sizeOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <FieldError field="size" error={errors.size} />
+          </div>
         </div>
 
         <fieldset className="field" aria-describedby={describedBy('interests', true)} aria-invalid={Boolean(errors.interests) || undefined}>
@@ -217,15 +208,17 @@ export function DemoRequestForm() {
           <p id="demo-interests-hint" className="hint">
             Select all that apply.
           </p>
-          {interestOptions.map((o) => {
-            const id = `demo-interest-${o.value}`;
-            return (
-              <div key={o.value} className="choice">
-                <input id={id} type="checkbox" name="interests" value={o.value} checked={data.interests.includes(o.value)} onChange={(e) => toggleInterest(o.value, e.target.checked)} />
-                <label htmlFor={id}>{o.label}</label>
-              </div>
-            );
-          })}
+          <div className="choice-grid">
+            {interestOptions.map((o) => {
+              const id = `demo-interest-${o.value}`;
+              return (
+                <div key={o.value} className="choice">
+                  <input id={id} type="checkbox" name="interests" value={o.value} checked={data.interests.includes(o.value)} onChange={(e) => toggleInterest(o.value, e.target.checked)} />
+                  <label htmlFor={id}>{o.label}</label>
+                </div>
+              );
+            })}
+          </div>
           <FieldError field="interests" error={errors.interests} />
         </fieldset>
 
@@ -273,7 +266,7 @@ export function DemoRequestForm() {
           <input id="demo-website" type="text" name="website" tabIndex={-1} autoComplete="off" value={data.website} onChange={(e) => update('website', e.target.value)} />
         </div>
 
-        <div>
+        <div className="form__submit">
           <button type="submit" className="cta cta--primary" disabled={status.kind === 'submitting'} aria-disabled={status.kind === 'submitting'}>
             {status.kind === 'submitting' ? 'Sending request…' : 'Request a demo'}
           </button>

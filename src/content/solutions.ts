@@ -20,12 +20,16 @@ export type SolutionPageContent = {
   navLabel: string;
   audience: string;
   summary: string;
+  /** One-line positioning used on audience cards. */
+  tagline: string;
   seo: SeoFields;
   hero: { eyebrow: string; heading: string; intro: string };
   sections: SolutionSection[];
   faqs: Faq[];
   cta: { heading: string; body: string };
   availability: Availability;
+  /** Optional real product screen for the hero. */
+  heroShot?: ProductShotKey;
 };
 
 export const solutionsOverview = {
@@ -44,6 +48,8 @@ export const solutionsOverview = {
 export const solutionPages: SolutionPageContent[] = [
   {
     slug: 'schools',
+    heroShot: 'attendance',
+    tagline: 'Run your school from one connected platform.',
     navLabel: 'Schools',
     audience: 'School teams: administrators, teachers, finance and admissions staff',
     summary: 'Run the daily work of the school in one connected platform.',
@@ -111,6 +117,8 @@ export const solutionPages: SolutionPageContent[] = [
   },
   {
     slug: 'school-leadership',
+    heroShot: 'dashboard',
+    tagline: 'Get visibility across your school’s operations and performance.',
     navLabel: 'School Owners & Leadership',
     audience: 'Principals, deputy principals, school owners and governing leadership',
     summary: 'See what is happening across the school and where attention may be needed.',
@@ -163,6 +171,7 @@ export const solutionPages: SolutionPageContent[] = [
   },
   {
     slug: 'education-groups',
+    tagline: 'Run every school in your group on one consistent, connected platform.',
     navLabel: 'Education Groups',
     audience: 'Organisations that operate or support more than one school',
     summary: 'A consistent platform across schools, with each school’s data kept separate.',
@@ -227,6 +236,8 @@ export const solutionPages: SolutionPageContent[] = [
   },
   {
     slug: 'funders',
+    heroShot: 'analytics',
+    tagline: 'Strengthen participation and performance information in the schools you support.',
     navLabel: 'Funders',
     audience: 'Foundations, donors, development partners and programme funders supporting schools',
     summary: 'Help the schools you support build reliable, connected information.',

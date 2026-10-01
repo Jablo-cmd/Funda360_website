@@ -1,5 +1,5 @@
 import { ctas } from './ctas';
-import { capabilityPages } from './platform';
+import { capabilityPages, platformAreas } from './platform';
 import { solutionPages } from './solutions';
 import type { NavItem, NavLink } from './types';
 
@@ -10,7 +10,12 @@ export const primaryNav: NavItem[] = [
     href: '/platform',
     children: [
       { label: 'Platform overview', href: '/platform', description: 'All twelve capability areas' },
-      ...capabilityPages.map((page) => ({ label: page.navLabel, href: `/platform/${page.slug}`, description: page.seo.description })),
+      ...capabilityPages.map((page) => ({
+        label: page.navLabel,
+        href: `/platform/${page.slug}`,
+        // Short summary of the first platform area this page covers.
+        description: platformAreas.find((area) => area.href === `/platform/${page.slug}`)?.summary,
+      })),
     ],
   },
   {

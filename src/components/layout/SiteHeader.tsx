@@ -1,10 +1,12 @@
 'use client';
 
+import { ArrowRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { headerActions, primaryNav } from '@/content/navigation';
 import type { NavItem } from '@/content/types';
+import { Logo } from '@/components/ui/Logo';
 
 function isCurrent(pathname: string, href: string) {
   return pathname === href;
@@ -19,10 +21,10 @@ function isInSection(pathname: string, item: NavItem) {
  * Site header and primary navigation.
  *
  * Accessibility pattern: "disclosure navigation" (not an ARIA menu).
- * - Platform and Solutions open a list of links via a button with aria-expanded.
- * - Escape closes an open submenu (and the mobile menu) and returns focus.
+ * - Platform and Solutions open a panel of links via a button with aria-expanded.
+ * - Escape closes an open panel (and the mobile menu) and returns focus.
  * - Clicking outside or navigating closes everything.
- * - Below the mobile breakpoint, a single Menu button reveals the whole nav.
+ * - Below 64rem, a single Menu button reveals a full-height navigation sheet.
  * - Without JavaScript the navigation is fully visible (see html[data-js] in CSS).
  */
 export function SiteHeader() {
@@ -46,6 +48,20 @@ export function SiteHeader() {
     setOpenSubmenu(null);
     setMobileOpen(false);
   }, []);
+
+  // The mobile sheet covers the page: stop the page behind it from scrolling,
+  // and close the sheet if the viewport grows into the desktop layout.
+  useEffect(() => {
+    document.documentElement.style.overflow = mobileOpen ? 'hidden' : '';
+    if (!mobileOpen) return;
+    const desktop = window.matchMedia('(min-width: 64rem)');
+    const onChange = () => desktop.matches && setMobileOpen(false);
+    desktop.addEventListener('change', onChange);
+    return () => {
+      desktop.removeEventListener('change', onChange);
+      document.documentElement.style.overflow = '';
+    };
+  }, [mobileOpen]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -81,9 +97,8 @@ export function SiteHeader() {
     <header className="site-header" ref={headerRef} data-hydrated={hydrated || undefined}>
       <div className="container site-header__inner">
         <Link href="/" className="site-header__brand" aria-current={pathname === '/' ? 'page' : undefined}>
-          {/* Logo placeholder: the final Funda360 logo is supplied in Phase 2. */}
-          <span className="logo-placeholder">FUNDA360</span>
-          <span className="visually-hidden"> home</span>
+          <Logo />
+          <span className="visually-hidden">Funda360 home</span>
         </Link>
 
         <button
@@ -94,6 +109,7 @@ export function SiteHeader() {
           aria-controls="site-nav"
           onClick={() => setMobileOpen((open) => !open)}
         >
+          {mobileOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
           {mobileOpen ? 'Close menu' : 'Menu'}
         </button>
 
@@ -128,6 +144,8 @@ export function SiteHeader() {
               }
 
               const expanded = openSubmenu === id;
+              // The first child is the section overview; it is shown as the panel footer link.
+              const [overview, ...pages] = item.children;
               return (
                 <li key={item.href} className="site-nav__item site-nav__item--has-children" onBlur={(e) => onSubmenuBlur(e, id)}>
                   <button
@@ -140,16 +158,26 @@ export function SiteHeader() {
                     onClick={() => setOpenSubmenu(expanded ? null : id)}
                   >
                     {item.label}
+                    <ChevronDown className="site-nav__chevron" size={16} aria-hidden="true" />
                   </button>
-                  <ul id={`nav-submenu-${id}`} className="site-nav__submenu" data-open={expanded}>
-                    {item.children.map((child) => (
-                      <li key={child.href}>
-                        <Link href={child.href} aria-current={isCurrent(pathname, child.href) ? 'page' : undefined}>
-                          {child.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  <div id={`nav-submenu-${id}`} className="site-nav__submenu" data-open={expanded} data-size={pages.length > 4 ? 'wide' : 'compact'}>
+                    <ul className="site-nav__panel-grid">
+                      {pages.map((child) => (
+                        <li key={child.href}>
+                          <Link href={child.href} aria-current={isCurrent(pathname, child.href) ? 'page' : undefined}>
+                            <span className="site-nav__submenu-label">{child.label}</span>
+                            {child.description ? <span className="site-nav__submenu-desc">{child.description}</span> : null}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="site-nav__submenu-overview">
+                      <Link href={overview.href} aria-current={isCurrent(pathname, overview.href) ? 'page' : undefined}>
+                        {overview.label}
+                        <ArrowRight size={16} aria-hidden="true" />
+                      </Link>
+                    </p>
+                  </div>
                 </li>
               );
             })}

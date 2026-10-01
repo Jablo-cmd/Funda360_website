@@ -111,6 +111,17 @@ export const platformAreas: PlatformArea[] = [
   },
 ];
 
+/**
+ * The twelve areas grouped into four connected clusters that follow the
+ * Manage → Understand → Act story (used on Home and /platform).
+ */
+export const platformGroups = [
+  { id: 'people', step: 'Manage · People', title: 'People and records', intro: 'Who is in the school, and who may see what.', areaIds: ['learner-management', 'educator-management', 'roles-permissions'] },
+  { id: 'teaching', step: 'Manage · Teaching', title: 'Teaching and learning', intro: 'The academic year, from timetable to report card.', areaIds: ['academics-curriculum', 'assessments-results', 'attendance'] },
+  { id: 'operations', step: 'Manage · Operations', title: 'School operations', intro: 'The work that keeps the school running.', areaIds: ['fees-finance', 'communication', 'school-administration'] },
+  { id: 'insight', step: 'Understand → Act', title: 'Insight', intro: 'What the connected information tells you.', areaIds: ['performance-analytics', 'reporting', 'ai-intelligence'] },
+] as const;
+
 /** Extra detail for areas that have no dedicated page, shown on /platform. */
 export const platformAreaDetails: Record<string, Feature[]> = {
   'educator-management': [
@@ -159,7 +170,9 @@ export const platformOverview = {
       'Parents and learners see published results, homework and attendance in their own portals.',
       'Dashboards and reports read from the same records the school works in every day.',
     ],
-  } satisfies Section & { points: string[] },
+    /** Short titles for the points above, in the same order. */
+    pointTitles: ['Enrol once', 'Into report cards', 'Shared with families', 'Reported from the source'],
+  } satisfies Section & { points: string[]; pointTitles: string[] },
   areasSection: {
     id: 'capabilities',
     heading: 'Platform capabilities',
@@ -170,7 +183,11 @@ export const platformOverview = {
     heading: 'Portals for parents and learners',
     intro:
       'Parents and learners sign in to their own portals to see the information the school has chosen to share with them: timetables, homework, results, report cards, attendance, documents, announcements and messages.',
-  } satisfies Section,
+    items: [
+      { title: 'Parents', description: 'Their children’s attendance, homework, results, report cards, fees, messages and consent choices, where the school shares them.' },
+      { title: 'Learners', description: 'Timetable, homework and submissions, results, report cards, attendance, documents and announcements.' },
+    ] satisfies Feature[],
+  } satisfies Section & { items: Feature[] },
   faqs: [
     {
       question: 'Do we have to use every part of Funda360?',
@@ -269,7 +286,7 @@ export const capabilityPages: CapabilityPageContent[] = [
         },
       ],
     },
-    shots: ['learnerManagement', 'parentPortal'],
+    shots: ['learnerManagement', 'learnerDirectory', 'parentPortal'],
     outcomes: {
       heading: 'What this means for your school',
       items: [
@@ -438,7 +455,7 @@ export const capabilityPages: CapabilityPageContent[] = [
         },
       ],
     },
-    shots: ['attendance'],
+    shots: ['attendance', 'analytics', 'parentPortal'],
     outcomes: {
       heading: 'What this means for your school',
       items: [

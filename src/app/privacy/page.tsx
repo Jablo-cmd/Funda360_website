@@ -14,10 +14,15 @@ export default function PrivacyPage() {
       <Breadcrumbs trail={[{ name: page.heading, path: '/privacy' }]} />
       <section className="hero" aria-labelledby="page-title">
         <div className="container container--narrow">
+          <p className="eyebrow">Legal</p>
           <h1 id="page-title">Privacy policy</h1>
-          <Placeholder>{page.placeholder}</Placeholder>
         </div>
       </section>
+      <div className="section">
+        <div className="container container--narrow prose">
+          <Placeholder>{page.placeholder}</Placeholder>
+        </div>
+      </div>
     </>
   );
 }

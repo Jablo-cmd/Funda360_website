@@ -2,10 +2,11 @@
 
 The public marketing website for **Funda360**, the connected school management platform.
 
-> **Status: Phase 1 complete (structure).** The full information architecture,
-> routing, content hierarchy, components, responsive behaviour, accessibility
-> and SEO foundations are in place, using neutral, functional styling only.
-> **Phase 2 = full visual design by Claude Design.** See [`DESIGN_HANDOFF.md`](./DESIGN_HANDOFF.md).
+> **Status: Phase 1 (structure) and Phase 2 (visual design) complete.**
+> The site has its full information architecture, content model, responsive,
+> accessibility and SEO foundations, and the Funda360 design system (tokens,
+> typography, components and real product screenshots captured with fictional
+> demo data). See [`DESIGN_HANDOFF.md`](./DESIGN_HANDOFF.md) §0.
 
 This repository is the marketing site only. The Funda360 application is a
 separate product (separate repository and deployment); the **Login** CTA links
@@ -14,7 +15,8 @@ to it. This site has no authentication.
 ## Stack
 
 - Next.js (App Router) + React + TypeScript
-- Plain CSS (`src/app/globals.css`) with neutral structural styles
+- Plain CSS design system (`src/app/globals.css`, all values as tokens on `:root`)
+- Self-hosted fonts via `@fontsource-variable` (Inter, Inter Tight, JetBrains Mono); icons via `lucide-react`
 - Every page is statically generated; optional fully static export
 
 ## Getting started
@@ -57,13 +59,15 @@ src/
   app/                 Routes (one folder per URL) + sitemap.ts, robots.ts, not-found.tsx
   components/
     layout/            SiteHeader (navigation), SiteFooter
-    ui/                Reusable sections, cards, CTAs, product-shot slots, FAQs, breadcrumbs, JSON-LD
+    ui/                Reusable sections, cards, CTAs, product-shot frames, logo, badges, FAQs, breadcrumbs, JSON-LD
+    story/             Connected hub, Manage → Understand → Act story, capability groups, product tour
     templates/         CapabilityPageTemplate, SolutionPageTemplate, ArticleTemplate
     forms/             DemoRequestForm
   content/             ALL copy and structured content (navigation, platform, AI, solutions,
                        resources/articles, FAQs, CTAs, screenshots, demo options, legal)
   config/site.ts       Environment-driven site configuration
   lib/                 SEO/metadata + structured data, demo-request validation/submission, formatting
+public/screenshots/    Real Funda360 screens with fictional demo data (see DESIGN_HANDOFF.md §0)
 scripts/qa.mjs         End-to-end QA
 ```
 

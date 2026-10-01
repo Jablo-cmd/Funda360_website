@@ -8,8 +8,9 @@ import type { Cta } from './types';
  * - Existing users: Login (external, the Funda360 application).
  */
 export const ctas = {
-  requestDemo: { label: 'Request a demo', href: '/request-demo' },
+  requestDemo: { label: 'Request a Demo', href: '/request-demo' },
   explorePlatform: { label: 'Explore the platform', href: '/platform' },
+  exploreFunda360: { label: 'Explore Funda360', href: '/platform' },
   exploreAi: { label: 'See how Funda360 approaches AI', href: '/ai' },
   exploreSolutions: { label: 'Find your solution', href: '/solutions' },
   readInsights: { label: 'Read insights', href: '/resources' },

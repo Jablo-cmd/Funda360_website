@@ -7,8 +7,8 @@ export const demoPage = {
       'Request a Funda360 demo. Tell us about your school, group or programme and the Funda360 team will arrange a walkthrough focused on what matters to you.',
   } satisfies SeoFields,
   hero: {
-    eyebrow: 'Request a demo',
-    heading: 'Request a Funda360 demo',
+    eyebrow: 'Request a Demo',
+    heading: 'Ready to see Funda360 in action?',
     intro: 'Tell us a little about your organisation and what you would like to see. The Funda360 team will contact you to arrange a walkthrough.',
   },
   expectations: {

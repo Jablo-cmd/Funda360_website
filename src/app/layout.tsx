@@ -3,7 +3,11 @@ import { siteConfig } from '@/config/site';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { MotionObserver } from '@/components/layout/MotionObserver';
 import { JsonLd } from '@/components/ui/JsonLd';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/inter-tight';
+import '@fontsource-variable/jetbrains-mono';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -11,12 +15,12 @@ export const metadata: Metadata = {
   title: { default: `${siteConfig.name} | ${siteConfig.tagline}`, template: `%s | ${siteConfig.name}` },
   description: siteConfig.description,
   applicationName: siteConfig.name,
-  // Favicon/app icons are a Phase 2 design deliverable (src/app/icon.*).
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#0B1F3A',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
         <SiteFooter />
+        <MotionObserver />
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
       </body>

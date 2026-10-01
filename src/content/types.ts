@@ -66,6 +66,11 @@ export type ProductShotSpec = {
   src?: string;
   /** Intended aspect ratio, e.g. "16 / 10". */
   aspectRatio?: string;
+  /** Intrinsic pixel size of `src` (prevents layout shift). */
+  width?: number;
+  height?: number;
+  /** "desktop" frames get browser chrome; "phone" frames a device outline; "detail" is a cropped close-up. */
+  frame?: 'desktop' | 'phone' | 'detail';
 };
 
 export type Section = {

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { articlesInCategory, categories, getCategory } from '@/content/resources';
 import { ArticleList } from '@/components/ui/ArticleList';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { CategoryNav } from '@/components/ui/CategoryNav';
 import { CtaBanner } from '@/components/ui/CtaBanner';
 import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
@@ -41,11 +42,15 @@ export default async function CategoryPage({ params }: Params) {
           { name: category.name, path: `/resources/category/${category.slug}` },
         ]}
       />
-      <PageHero eyebrow="Resources · Category" heading={category.name} intro={category.description} />
-      <Section id="articles" heading={`Articles in ${category.name}`}>
-        <ArticleList articles={items} />
+      <PageHero eyebrow="Resources · Category" heading={category.name} intro={category.description}>
+        <div className="spaced-top">
+          <CategoryNav current={category.slug} />
+        </div>
+      </PageHero>
+      <Section id="articles" eyebrow={`${items.length} ${items.length === 1 ? 'article' : 'articles'}`} heading={`Articles in ${category.name}`}>
+        <ArticleList articles={items} columns={items.length > 1 ? 3 : 2} />
       </Section>
-      <Section id="other-categories" heading="Other categories">
+      <Section id="other-categories" tone="muted" heading="Other categories">
         <ul className="bullets">
           {categories
             .filter((c) => c.slug !== category.slug)

@@ -352,6 +352,91 @@ try {
     if (!html.includes(`http-equiv="refresh" content="0;url=${EXPECTED_LOGIN}"`)) fail('login', '/login does not forward to the application');
     if (!html.includes('noindex')) fail('login', '/login should be noindex');
   }
+
+  /* ------------------------------------------------------------ */
+  /* 7. Phase 2 design: images, fonts, motion, product tour       */
+  /* ------------------------------------------------------------ */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+    const page = await ctx.newPage();
+    const assets = new Set();
+    for (const route of REQUIRED_ROUTES) {
+      await page.goto(BASE + route, { waitUntil: 'networkidle' });
+      // Scroll so lazy images load, then require every image to have decoded.
+      await page.evaluate(async () => {
+        for (let y = 0; y < document.body.scrollHeight; y += 600) {
+          window.scrollTo(0, y);
+          await new Promise((r) => setTimeout(r, 30));
+        }
+      });
+      await page.waitForLoadState('networkidle');
+      const imgs = await page.evaluate(() =>
+        [...document.images]
+          // Images inside unselected tabs are not rendered (and load on selection); the tour test covers them.
+          .filter((img) => img.getClientRects().length > 0)
+          .map((img) => ({ src: img.getAttribute('src'), ok: img.complete && img.naturalWidth > 0, alt: img.getAttribute('alt') })),
+      );
+      for (const img of imgs) {
+        assets.add(img.src);
+        if (!img.ok) fail(route, `image failed to load: ${img.src}`);
+        if (!img.alt || img.alt.length < 20) fail(route, `image alt text too short: ${img.src}`);
+      }
+      // With reduced motion, nothing may be left hidden by entrance animations.
+      const hidden = await page.evaluate(() => [...document.querySelectorAll('[data-reveal]')].filter((el) => getComputedStyle(el).opacity !== '1').length);
+      if (hidden) fail(route, `${hidden} element(s) hidden under prefers-reduced-motion`);
+    }
+    for (const src of assets) {
+      const res = await fetch(BASE + src);
+      if (res.status !== 200) fail('assets', `${src} → HTTP ${res.status}`);
+    }
+    notes.push(`Verified ${assets.size} distinct product images load with alt text.`);
+
+    await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.fonts.ready);
+    const fonts = await page.evaluate(() => ({
+      inter: document.fonts.check('16px "Inter Variable"'),
+      tight: document.fonts.check('600 32px "Inter Tight Variable"'),
+      mono: document.fonts.check('12px "JetBrains Mono Variable"'),
+      body: getComputedStyle(document.body).fontFamily,
+    }));
+    if (!fonts.inter || !fonts.tight || !fonts.mono) fail('fonts', `self-hosted fonts not loaded: ${JSON.stringify(fonts)}`);
+
+    // Product tour: WAI-ARIA tabs with arrow-key navigation.
+    await page.locator('header[data-hydrated]').waitFor();
+    const tabs = page.getByRole('tab');
+    const tabCount = await tabs.count();
+    if (tabCount < 5) fail('tour', `expected product tour tabs, found ${tabCount}`);
+    await tabs.first().focus();
+    await page.keyboard.press('ArrowRight');
+    if ((await tabs.nth(1).getAttribute('aria-selected')) !== 'true') fail('tour', 'ArrowRight did not select the next tab');
+    if (!(await page.locator('#tour-panel-learners').isVisible())) fail('tour', 'selected tab panel not visible');
+    if (await page.locator('#tour-panel-dashboard').isVisible()) fail('tour', 'previous tab panel still visible');
+    await page.keyboard.press('End');
+    if ((await tabs.nth(tabCount - 1).getAttribute('aria-selected')) !== 'true') fail('tour', 'End did not select the last tab');
+    // Every tab's screenshot loads once its tab is selected.
+    for (let i = 0; i < tabCount; i++) {
+      await tabs.nth(i).click();
+      const panel = page.locator('[role="tabpanel"][data-active]');
+      await panel.locator('img').evaluate((img) => (img.complete ? null : new Promise((r) => img.addEventListener('load', r, { once: true }))));
+      const ok = await panel.locator('img').evaluate((img) => img.naturalWidth > 0);
+      if (!ok) fail('tour', `tab ${i + 1} screenshot did not load`);
+      assets.add(await panel.locator('img').getAttribute('src'));
+    }
+    await ctx.close();
+  }
+
+  /* ------------------------------------------------------------ */
+  /* 8. Design-system guard: teal-500 is a fill colour only        */
+  /* ------------------------------------------------------------ */
+  {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync(new URL('../src/app/globals.css', import.meta.url), 'utf8').split('\n');
+    css.forEach((line, i) => {
+      if (/teal-500|#14b8a6/i.test(line) && !/^\s*(--teal-500:|background(-color)?:|\*)/.test(line)) {
+        fail('design tokens', `globals.css:${i + 1} uses teal-500 outside a background fill: ${line.trim()}`);
+      }
+    });
+  }
 } finally {
   await browser.close();
   stopServer();

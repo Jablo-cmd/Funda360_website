@@ -1,16 +1,64 @@
 # Funda360 Website — Design Handoff
 
-**From:** Phase 1 (Structure) · **To:** Phase 2 (Visual design)
+**Status:** Phase 1 (Structure) ✅ · **Phase 2 (Visual design) ✅ implemented** · Next: engineering polish and launch content.
 
-> ## Phase 2 = full visual design by Claude Design.
+> Process: Strategy → Structure ✅ → Design ✅ → Engineering polish (next).
 >
-> Phase 1 delivered a complete, working, navigable website skeleton: every
-> route, page, section, content hierarchy, reusable component, CTA flow,
-> responsive structure, accessibility foundation and SEO foundation.
-> It intentionally has **no visual design**: no colour system, typography
-> system, logo, imagery, icons, illustrations, shadows, gradients or motion.
->
-> Process: Strategy → Structure ✅ → **Design (next)** → Engineering polish.
+> Phase 1 delivered the complete information architecture, routes, content
+> model, components, responsive structure, accessibility and SEO foundations.
+> Phase 2 applied the full visual design system on top of that structure
+> without changing routes, content architecture, CTA destinations, form
+> fields, login behaviour or SEO metadata. See §0 for what Phase 2 changed.
+
+---
+
+## 0. Phase 2 implementation (design system)
+
+### Design tokens (all in `src/app/globals.css` `:root`)
+
+| Role | Token | Value | Use |
+| --- | --- | --- | --- |
+| Brand / action | `--blue-600`, `--blue-700` (hover), `--blue-50`, `--blue-400` | #2563EB, #1D4ED8, #EFF6FF, #60A5FA | Primary buttons, links, active nav, selected states |
+| Intelligence | `--teal-700` (text/icons), `--teal-50` (tint), `--teal-500` (fills only) | #0F766E, #F0FDFA, #14B8A6 | AI/insight content only. **teal-500 is never text, icon, border or focus** (enforced by `npm run qa`) |
+| Trust | `--navy-900` | #0B1F3A | Product tour, trust, portals, closing CTA panel, demo hero, footer |
+| Neutral | `--slate-900/700/500/200/50`, `--white` | | ~80% of every page |
+| Status | `--amber-700/50`, `--red-700/50` | | "To be confirmed" badges, placeholders; form errors |
+
+Typography: **Inter** (UI/body), **Inter Tight** (H1/H2/display), **JetBrains Mono** (eyebrows, data labels, metadata), self-hosted via `@fontsource-variable/*` (no third-party font requests). Scale: `--fs-display` (home H1 only), `--fs-h1`, `--fs-h2`, `--fs-h3`, `--fs-lead` per the Phase 2 specification. Spacing scale 4 → 128px (`--space-1…10`), section rhythm `--section-y` (64px → 128px). Layout: 1200px content (`.container`), 1320px showcase bands (`.container--wide`), 12-column `.split` at ≥1024px, side padding `clamp(1rem, 4vw, 2.5rem)`. Radius 6 / 10 / 16 / 20px; pills only for badges and category filters. Motion: 180ms UI transitions, gentle screenshot entrance (`[data-reveal]`), all disabled under `prefers-reduced-motion`.
+
+Contrast: every text/background pair is WCAG AA. On navy, text uses white / `#C7D2E0`, links `#93C5FD`, insight text `#5EEAD4`, focus `--blue-400`. axe reports 0 violations on all 27 routes.
+
+### Brand mark
+
+`src/components/ui/Logo.tsx` reuses the identity already used inside the Funda360 application (rounded tile with the "F" stroke; Funda**360** with "360" in brand blue). Funda360 is the primary identity; Auris Nexus Technologies appears only in the footer legal line and About.
+
+### New / restyled components
+
+| Component | File | Purpose |
+| --- | --- | --- |
+| `Logo` | `ui/Logo.tsx` | Mark + wordmark, default and inverse |
+| `ProductShot` | `ui/ProductShot.tsx` | Real screenshot in a desktop / phone / detail frame, "Real product · fictional demo data" caption; labelled placeholder when no image |
+| `ConnectedHub` | `story/ConnectedHub.tsx` | The learner record at the centre of eight connected areas (links); lines decorative |
+| `MuaStory` | `story/MuaStory.tsx` | Manage → Understand → Act on a connecting rail, one real screen per step; Act carries Available / Roadmap labels |
+| `CapabilityGroups` | `story/CapabilityGroups.tsx` | Twelve areas as four connected clusters (People · Teaching · Operations → Insight) |
+| `ProductTour` | `story/ProductTour.tsx` | WAI-ARIA tabs (arrow keys, Home/End) over seven real screens; all panels shown without JS |
+| `ConceptPanel` | `ui/ConceptPanel.tsx` | Roadmap concept described in words, labelled "not a product screen" |
+| `CategoryNav`, `FeaturedArticle` | `ui/CategoryNav.tsx`, `ui/ArticleList.tsx` | Editorial resources experience |
+| `AreaIcon` | `ui/AreaIcon.tsx` | Presentation-only icon mapping (lucide-react), kept out of content |
+| `MotionObserver` | `layout/MotionObserver.tsx` | Reveal-on-scroll for product visuals |
+| Header | `layout/SiteHeader.tsx` | Sticky header, mega-panels with descriptions, full-height mobile sheet with scroll lock |
+| Footer | `layout/SiteFooter.tsx` | Navy footer, inverse logo |
+
+### Truthfulness decisions made during Phase 2
+
+- **Audience taglines** (`tagline` in `content/solutions.ts`). Schools and Leadership use the suggested lines. *Education Groups* uses "Run every school in your group on one consistent, connected platform." and *Funders* "Strengthen participation and performance information in the schools you support." because centralised group visibility and programme-level reporting are **roadmap** in the application; the suggested lines would have implied they exist.
+- **AI** is presented with real, available evidence (attendance trend + below-threshold alert, dashboards) and a clearly labelled roadmap. The former "AI screenshot" slot is now a `ConceptPanel` in words, never a mock UI.
+- Check marks mean "available"; roadmap / unconfirmed items use a dashed-circle marker and a text badge.
+- Homepage H1 is now "The operating platform for modern schools." with the brand line "Smarter Schools. Better Outcomes." as its eyebrow; the page `<title>` is unchanged. The demo page H1 is "Ready to see Funda360 in action?"; its `<title>` is unchanged.
+
+### Product screenshots (provenance)
+
+All 13 images in `public/screenshots/` are **real Funda360 application screens**, captured by running a *copy* of the application locally (in a scratch directory, never inside the application repository) against a network-mocked backend populated with an entirely **fictional "Funda360 Demo School"** (generated names, numbers, amounts). No real learners, guardians, staff, schools, pilot sites or records appear. Before capture, two session-specific elements were hidden: the per-user two-factor set-up reminder, and the data-protection status card (to avoid implying a compliance status). Three images are crops of the same screens (`detail-*.webp`) used in the Manage → Understand → Act story. Images are WebP (~30–60 KB each), with intrinsic sizes to prevent layout shift and alt text describing what is visible. To replace or add an image, update `src/content/screenshots.ts`.
 
 ---
 
@@ -108,7 +156,7 @@ Every page has exactly one `h1`; sections are `h2`; items within sections are
 `h3` (`h4` when nested). Section `id`s are stable anchors; keep them.
 
 ### Home `/`
-1. **Hero** (`data-section="hero"`): eyebrow `FUNDA360`, h1 *Smarter Schools. Better Outcomes.*, explanation, CTAs [Request a demo] [Explore the platform], dashboard screenshot slot
+1. **Hero** (`data-section="hero"`): eyebrow *Smarter Schools. Better Outcomes.*, display h1 *The operating platform for modern schools.*, one-line explanation, CTAs [Request a Demo] [Explore Funda360], module strip, dashboard + phone product visual
 2. **Introduction** `#introduction`: what Funda360 is
 3. **Problem** `#problem`: 4 fragmentation pain points
 4. **Connected platform** `#connected-platform`
@@ -226,34 +274,26 @@ Design guidance:
 
 ---
 
-## 7. Product screenshot requirements
+## 7. Product screenshots
 
-Slots are defined in `src/content/screenshots.ts`. Set `src` (e.g.
-`/screenshots/dashboard.png` in `public/`) to replace a placeholder; keep `alt`
-accurate.
+Slots are defined in `src/content/screenshots.ts`; all have real images (see §0 for provenance) except `ai`, which is deliberately a roadmap concept rendered as a `ConceptPanel`.
 
-| Slot id | Shows | Capture from (application) | Used on |
+| Slot | Image | Application screen | Used on |
 | --- | --- | --- | --- |
-| `dashboard` | Leadership dashboard | `/dashboard` (principal persona) | Home hero + showcase, Platform, Analytics, Leadership, AI |
-| `learner-management` | Learner profile | `/learners/:id` | Home, Learner Mgmt |
-| `academic-performance` | Assessment results | `/academic/assessments/:id` | Home, Academics, Schools |
-| `attendance` | Register + trend chart | `/attendance`, `/reports/attendance` | Home, Attendance, Schools, AI |
-| `finance` | Finance overview / statement | `/fees` | Finance, Leadership |
-| `communication` | Messaging + announcements | `/messages`, `/announcements` | Communication |
-| `analytics` | Reports overview | `/reports` | Home, Analytics |
-| `reporting` | Report-card workflow + PDF | `/report-cards` | Home, Academics |
-| `parent-portal` | Parent portal (portrait, phone) | `/parent/dashboard` | Platform (portals) |
-| `ai` | Roadmap concept only | — | AI |
+| `dashboard` | `dashboard.webp` | `/dashboard` (principal) | Home hero + tour, Platform hero, Analytics, Leadership hero, AI, Demo |
+| `learnerManagement` | `learner-profile.webp` | `/learners/:id` | Home tour, Learner Management |
+| `learnerDirectory` | `learners.webp` | `/learners` | Platform, Learner Management |
+| `academicPerformance` | `assessment.webp` | `/academic/assessments/:id` | Home tour, Platform, Academics |
+| `attendance` | `attendance.webp` | `/attendance` | Platform, Attendance, Schools hero |
+| `analytics` | `attendance-report.webp` | `/reports/attendance` | Home tour, Platform, Attendance, Analytics, AI, Funders hero |
+| `finance` | `finance.webp` | `/fees` | Home tour, Platform, Finance, Leadership |
+| `communication` | `messages.webp` | `/messages` | Home tour, Platform, Communication |
+| `reporting` | `report-cards.webp` | `/report-cards` | Home tour, Platform, Academics |
+| `parentPortal` | `parent-portal.webp` (phone) | `/parent/children/:id` | Home hero, Platform portals, Learner Mgmt, Attendance |
+| `detailRegister` / `detailTrend` / `detailAttention` | `detail-*.webp` (crops) | attendance, attendance report, learner profile | Manage → Understand → Act story, AI |
+| `ai` | — (concept panel) | none: roadmap | — |
 
-Capture rules:
-- **Demo tenant with fictional data only.** Never real learners, guardians,
-  staff, schools, pilot sites or financial records. Check names, photos,
-  emails, ID numbers, amounts, school names, URLs and browser chrome.
-- Consistent viewport, theme and zoom; 16:10 (desktop) and 9:16 (phone).
-- Provide 2× resolution assets; meaningful alt text describing what is shown.
-- Device frames/annotation style are a Phase 2 design decision.
-
----
+Rules for future captures: demo tenant with fictional data only; consistent 1440×900 desktop / 390×844 phone viewports at 2× scale, light theme; WebP ~80 quality, 1600px wide (desktop) / 780px (phone); keep alt text accurate.
 
 ## 8. CTA strategy
 
@@ -299,7 +339,7 @@ Role\* (select), Number of learners or schools\* (select), Interests\*
 
 ---
 
-## 11. Accessibility foundations (preserve in Phase 2)
+## 11. Accessibility foundations (preserve)
 
 Verified with axe (WCAG 2.1 A/AA) on every route: **0 violations**.
 
@@ -323,42 +363,24 @@ on every new colour, never use colour alone for availability or errors, honour
 Verified with no horizontal overflow at 320, 390, 768 and 1280px on every route.
 
 - Mobile-first; grids reflow by available width (`auto-fit`, min 14–22rem).
-- Header collapses to a Menu button below 60rem; submenus become inline lists.
+- Header collapses to a Menu button below 64rem (full-height sheet with scroll lock); submenus become inline lists.
 - Two-column layouts (home hero, demo page) stack below 48rem.
 - Product slots keep their aspect ratio; portrait slots are width-capped.
 
 ---
 
-## 13. Where visual design should be applied
+## 13. Visual design applied (Phase 2)
 
-1. **Brand system:** logo (replace `.logo-placeholder` in header/footer), colour,
-   typography, spacing scale, iconography (sparing), favicon/OG images.
-2. **Header & navigation:** desktop dropdown panels (could become a mega-menu
-   using the `description` already in nav content), mobile menu presentation.
-3. **Home hero:** the single most important composition; product screenshot treatment.
-4. **Section rhythm:** use `data-tone` and alternating backgrounds to pace long pages.
-5. **Cards** (`.item`): capability, solution, article, workflow cards.
-6. **Manage → Understand → Act** and **Connect → Understand → Highlight → Act**:
-   strong candidates for a simple diagrammatic treatment.
-7. **Available vs Roadmap** visual language (AI page, badges).
-8. **Product screenshot frames** and gallery layouts.
-9. **Forms:** fields, choice controls, error/success states.
-10. **Article reading experience:** measure, quotes, callouts, author block.
-11. **CTA banner** and button hierarchy.
-12. **Footer.**
+Implemented across every route: brand system and logo, colour/typography/spacing tokens, sticky header with mega-panels and mobile sheet, home hero with layered product visual, connected-platform hub, Manage → Understand → Act story, capability clusters, navy product tour, intelligence section with Available / Roadmap split, audience cards, navy trust band, editorial outcomes, editorial resources and article reading experience, conversion-focused demo page with form card, centred utility pages, navy footer.
 
-**Avoid:** stock photography, childish school imagery, generic AI artwork,
-decorative illustrations that imply unverified claims, heavy animation, logo
-walls or metrics without verified sources.
-
----
+Possible engineering-polish follow-ups (not required for launch): Open Graph images per route, an optional dark theme, analytics on `data-cta`, and a CMS for `src/content/resources.ts`.
 
 ## 14. Open content items (before launch)
 
 Search the code for `TODO(content)` and `<Placeholder>`.
 
-- Final logo and brand assets (Phase 2).
-- Real product screenshots from a demo tenant (§7).
+- Confirm the brand mark (reused from the application) and supply Open Graph images.
+- Re-capture screenshots if the application UI changes (§7).
 - Company description, team and contact details for About (`content/about.ts`).
 - Privacy policy and terms (legal owner); POPIA-compliant demo-form notice.
 - Demo form backend and response-time commitment.
@@ -369,7 +391,13 @@ Search the code for `TODO(content)` and `<Placeholder>`.
 
 ---
 
-## 15. Phase 1 verification record
+## 15. Verification record
+
+### Phase 2 (2026-10-01)
+
+`npm run typecheck` clean · `npm run build` 33 static pages · `STATIC_EXPORT=1` build OK · `npm run qa` **all checks passed**, now including: every rendered image loads with descriptive alt text; every screenshot asset returns 200; each product-tour tab's screenshot loads; tour keyboard navigation (Arrow/End); self-hosted fonts loaded; no `[data-reveal]` content hidden under reduced motion; teal-500 used only as a fill colour. Also checked manually: no-JS rendering (navigation visible, all tour panels shown), 320/390/768/1280/1440px screenshots of every major route, mobile menu, desktop mega-panels, demo form states.
+
+### Phase 1
 
 `npm run build` → 33 static pages, no errors. `npm run typecheck` → clean.
 `npm run qa` → **all checks passed**:
