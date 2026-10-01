@@ -1,0 +1,43 @@
+import type { Metadata, Viewport } from 'next';
+import { siteConfig } from '@/config/site';
+import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
+import { SiteFooter } from '@/components/layout/SiteFooter';
+import { SiteHeader } from '@/components/layout/SiteHeader';
+import { JsonLd } from '@/components/ui/JsonLd';
+import './globals.css';
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
+  title: { default: `${siteConfig.name} | ${siteConfig.tagline}`, template: `%s | ${siteConfig.name}` },
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  // Favicon/app icons are a Phase 2 design deliverable (src/app/icon.*).
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang={siteConfig.language} suppressHydrationWarning>
+      <head>
+        {/* Flags that JavaScript is running so the mobile menu can start collapsed; without JS the nav stays visible. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.setAttribute('data-js','')" }} />
+      </head>
+      <body>
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
+        <SiteHeader />
+        <main id="main-content" tabIndex={-1}>
+          {children}
+        </main>
+        <SiteFooter />
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
+      </body>
+    </html>
+  );
+}
