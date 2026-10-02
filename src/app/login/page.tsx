@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { siteConfig } from '@/config/site';
 import { Logo } from '@/components/ui/Logo';
+import { seoFor } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
 
 /**
@@ -12,12 +13,7 @@ import { pageMetadata } from '@/lib/seo';
  * meta refresh (works on static hosting) and shows a plain link as fallback.
  * Header/footer Login CTAs link straight to the application.
  */
-export const metadata = pageMetadata({
-  title: 'Login',
-  description: 'Sign in to the Funda360 application.',
-  path: '/login',
-  noIndex: true,
-});
+export const metadata = pageMetadata(seoFor('/login'));
 
 export default function LoginRedirectPage() {
   return (

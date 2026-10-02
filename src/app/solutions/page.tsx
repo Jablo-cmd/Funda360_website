@@ -7,9 +7,11 @@ import { LinkCardList } from '@/components/ui/LinkCardList';
 import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
 import { CapabilityGroups } from '@/components/story/CapabilityGroups';
+import { seoFor } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
+import { PageSchema } from '@/components/ui/PageSchema';
 
-export const metadata = pageMetadata({ ...solutionsOverview.seo, path: '/solutions' });
+export const metadata = pageMetadata(seoFor('/solutions'));
 
 export default function SolutionsPage() {
   return (
@@ -34,6 +36,7 @@ export default function SolutionsPage() {
         <CapabilityGroups />
       </Section>
       <CtaBanner />
+      <PageSchema path="/solutions" type="CollectionPage" items={solutionPages.map((s) => ({ name: s.navLabel, path: `/solutions/${s.slug}` }))} />
     </>
   );
 }

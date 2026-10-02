@@ -3308,3 +3308,36 @@ html:not([data-js]) .tour__panel + .tour__panel {
   display: grid;
   place-items: center;
 }
+
+/* Screenshot captions: title, value statement, provenance. */
+.product-shot figcaption {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.product-shot__caption {
+  color: var(--text-secondary);
+}
+
+.related-solutions {
+  margin-top: var(--space-7);
+}
+
+.related-solutions h3 {
+  font-size: var(--fs-h4);
+  font-family: var(--font-sans);
+  margin-bottom: var(--space-3);
+}
+
+.home-hero__audience {
+  margin: var(--space-5) 0 0;
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+}
+
+.demo-hero__audience {
+  margin: var(--space-4) 0 0;
+  font-size: var(--fs-small);
+  color: var(--on-dark-muted);
+}

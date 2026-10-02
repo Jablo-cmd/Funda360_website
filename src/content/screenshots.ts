@@ -21,6 +21,7 @@ const desktop = { aspectRatio: '16 / 10', width: 1600, height: 1000, frame: 'des
 export const productShots = {
   dashboard: {
     id: 'dashboard',
+    caption: 'See learners, staff, attendance and fee collection in one leadership view.',
     title: 'Leadership dashboard',
     alt: 'Funda360 principal dashboard for a demo school, showing active learners, employees, classes, today’s attendance, the 30-day attendance rate, fee collection rate and recent assessments.',
     brief: 'Principal dashboard with summary tiles, attendance overview and recent assessments.',
@@ -30,6 +31,7 @@ export const productShots = {
   },
   learnerManagement: {
     id: 'learner-management',
+    caption: 'Enrolment, guardians, documents and finances in one profile, with gaps flagged for attention.',
     title: 'Learner profile',
     alt: 'Funda360 learner profile for a fictional Grade 8 learner, with enrolment details, record tabs, an “Attention required” panel and a financial summary.',
     brief: 'A single learner profile with record tabs and the attention-required panel.',
@@ -39,6 +41,7 @@ export const productShots = {
   },
   learnerDirectory: {
     id: 'learner-directory',
+    caption: 'Search, filter and manage every learner record in one directory.',
     title: 'Learner directory',
     alt: 'Funda360 learner directory listing fictional learners with learner and admission numbers and status, with search, status filter, CSV import and add-learner actions.',
     brief: 'Learner directory with search and filters.',
@@ -48,6 +51,7 @@ export const productShots = {
   },
   academicPerformance: {
     id: 'academic-performance',
+    caption: 'Marks are captured once, with the class average and range calculated as you go.',
     title: 'Assessment results',
     alt: 'Funda360 assessment view for a demo Grade 8A Mathematics test, showing marked learners, class average, highest and lowest marks, and each learner’s mark and percentage.',
     brief: 'An assessment with captured results for a demo class.',
@@ -57,6 +61,7 @@ export const productShots = {
   },
   attendance: {
     id: 'attendance',
+    caption: 'Mark each learner present, absent, late or excused in the daily class register.',
     title: 'Daily attendance register',
     alt: 'Funda360 class attendance register for a demo Grade 10A class, with present, absent, late and excused options for each learner.',
     brief: 'The class register being captured.',
@@ -66,6 +71,7 @@ export const productShots = {
   },
   finance: {
     id: 'finance',
+    caption: 'Billed, collected, outstanding and overdue amounts, with the collection rate and ageing.',
     title: 'Finance overview',
     alt: 'Funda360 finance overview for a demo school, showing total billed, collected, outstanding and overdue amounts, the collection rate, learners by payment status and balance ageing.',
     brief: 'Finance overview KPIs. Demo amounts only.',
@@ -75,6 +81,7 @@ export const productShots = {
   },
   communication: {
     id: 'communication',
+    caption: 'Staff and guardians message each other inside Funda360, not on personal phones.',
     title: 'Messages',
     alt: 'Funda360 messages inbox with a conversation between school staff and a fictional guardian about a consent form.',
     brief: 'Messaging inbox with a fictional staff-guardian conversation.',
@@ -84,6 +91,7 @@ export const productShots = {
   },
   analytics: {
     id: 'analytics',
+    caption: 'Daily registers roll up into a school-wide trend, with an attention line and alerts.',
     title: 'Attendance report',
     alt: 'Funda360 attendance report for a demo school, with present, absent and late counts, the attendance rate for the period, a six-week attendance trend chart and an alert that one learner has attendance below 80%.',
     brief: 'Attendance report with summary, trend chart and alert.',
@@ -93,6 +101,7 @@ export const productShots = {
   },
   reporting: {
     id: 'reporting',
+    caption: 'Report cards move through review and approval before families see them.',
     title: 'Report cards',
     alt: 'Funda360 report cards list for a demo school, showing Term 3 report cards by learner and class with overall results and workflow status from approved to published.',
     brief: 'Report-card list with workflow states.',
@@ -102,6 +111,7 @@ export const productShots = {
   },
   parentPortal: {
     id: 'parent-portal',
+    caption: 'Parents follow their child’s attendance on their phone.',
     title: 'Parent portal',
     alt: 'Funda360 parent portal on a phone, showing a fictional child’s attendance rate, present, absent and late counts, and recent attendance by date.',
     brief: 'Parent portal child view at mobile width.',
@@ -116,6 +126,7 @@ export const productShots = {
   /* Cropped close-ups used in the Manage → Understand → Act story. */
   detailRegister: {
     id: 'detail-register',
+    caption: 'A teacher takes the daily register.',
     title: 'Manage: taking the register',
     alt: 'Close-up of the Funda360 class register: each fictional learner marked present, absent, late or excused.',
     brief: 'Crop of the attendance register.',
@@ -128,6 +139,7 @@ export const productShots = {
   },
   detailTrend: {
     id: 'detail-trend',
+    caption: 'The same registers become a school-wide trend.',
     title: 'Understand: attendance trend',
     alt: 'Close-up of the Funda360 attendance report: summary counts, a six-week trend chart with an 80% attention line, and an alert that one learner has attendance below 80%.',
     brief: 'Crop of the attendance report chart and alert.',
@@ -140,6 +152,7 @@ export const productShots = {
   },
   detailAttention: {
     id: 'detail-attention',
+    caption: 'A learner record shows what needs attention.',
     title: 'Act: attention required',
     alt: 'Close-up of a Funda360 learner profile: an “Attention required” panel listing missing guardian, emergency contact and medical information, above guardian and financial summaries.',
     brief: 'Crop of the learner profile attention panel.',

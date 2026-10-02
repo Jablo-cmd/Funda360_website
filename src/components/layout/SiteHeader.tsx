@@ -33,16 +33,18 @@ export function SiteHeader() {
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const [hydrated, setHydrated] = useState(false);
-
   // Marks the header interactive (used by automated QA to avoid clicking before hydration).
-  useEffect(() => setHydrated(true), []);
-
-  // Close everything on navigation.
   useEffect(() => {
+    headerRef.current?.setAttribute('data-hydrated', '');
+  }, []);
+
+  // Close everything on navigation (reset during render when the route changes).
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
     setMobileOpen(false);
     setOpenSubmenu(null);
-  }, [pathname]);
+  }
 
   const closeAll = useCallback(() => {
     setOpenSubmenu(null);
@@ -94,7 +96,7 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="site-header" ref={headerRef} data-hydrated={hydrated || undefined}>
+    <header className="site-header" ref={headerRef}>
       <div className="container site-header__inner">
         <Link href="/" className="site-header__brand" aria-current={pathname === '/' ? 'page' : undefined}>
           <Logo />
@@ -113,16 +115,8 @@ export function SiteHeader() {
           {mobileOpen ? 'Close menu' : 'Menu'}
         </button>
 
-        <nav
-          id="site-nav"
-          aria-label="Primary"
-          className="site-nav"
-          data-open={mobileOpen}
-          // Close menus as soon as any link is activated, without waiting for the route change.
-          onClick={(event) => {
-            if ((event.target as HTMLElement).closest('a')) closeAll();
-          }}
-        >
+        {/* Every link closes the menus as soon as it is activated, without waiting for the route change. */}
+        <nav id="site-nav" aria-label="Primary" className="site-nav" data-open={mobileOpen}>
           <ul className="site-nav__list">
             {primaryNav.map((item) => {
               const id = item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -132,6 +126,7 @@ export function SiteHeader() {
                 return (
                   <li key={item.href} className="site-nav__item">
                     <Link
+                      onClick={closeAll}
                       href={item.href}
                       className="site-nav__link"
                       aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
@@ -164,7 +159,7 @@ export function SiteHeader() {
                     <ul className="site-nav__panel-grid">
                       {pages.map((child) => (
                         <li key={child.href}>
-                          <Link href={child.href} aria-current={isCurrent(pathname, child.href) ? 'page' : undefined}>
+                          <Link onClick={closeAll} href={child.href} aria-current={isCurrent(pathname, child.href) ? 'page' : undefined}>
                             <span className="site-nav__submenu-label">{child.label}</span>
                             {child.description ? <span className="site-nav__submenu-desc">{child.description}</span> : null}
                           </Link>
@@ -172,7 +167,7 @@ export function SiteHeader() {
                       ))}
                     </ul>
                     <p className="site-nav__submenu-overview">
-                      <Link href={overview.href} aria-current={isCurrent(pathname, overview.href) ? 'page' : undefined}>
+                      <Link onClick={closeAll} href={overview.href} aria-current={isCurrent(pathname, overview.href) ? 'page' : undefined}>
                         {overview.label}
                         <ArrowRight size={16} aria-hidden="true" />
                       </Link>
@@ -186,6 +181,7 @@ export function SiteHeader() {
           <ul className="site-nav__actions">
             <li>
               <Link
+                onClick={closeAll}
                 href={headerActions.primary.href}
                 className="cta cta--primary"
                 aria-current={isCurrent(pathname, headerActions.primary.href) ? 'page' : undefined}
@@ -194,7 +190,7 @@ export function SiteHeader() {
               </Link>
             </li>
             <li>
-              <a href={headerActions.login.href} className="cta cta--secondary">
+              <a href={headerActions.login.href} className="cta cta--secondary" onClick={closeAll}>
                 {headerActions.login.label}
                 <span className="visually-hidden"> (opens the Funda360 application)</span>
               </a>

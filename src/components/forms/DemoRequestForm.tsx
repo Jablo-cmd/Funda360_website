@@ -178,7 +178,10 @@ export function DemoRequestForm() {
         <div className="form__row form__row--end">
           <div className="field">
             <label htmlFor="demo-role">Your role (required)</label>
-            <select id="demo-role" name="role" required value={data.role} aria-invalid={Boolean(errors.role)} aria-describedby={describedBy('role')} onChange={(e) => update('role', e.target.value)}>
+            <p id="demo-role-hint" className="hint">
+              {demoPage.fieldHints.role}
+            </p>
+            <select id="demo-role" name="role" required value={data.role} aria-invalid={Boolean(errors.role)} aria-describedby={describedBy('role', true)} onChange={(e) => update('role', e.target.value)}>
               <option value="">Select your role</option>
               {roleOptions.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -191,7 +194,10 @@ export function DemoRequestForm() {
 
           <div className="field">
             <label htmlFor="demo-size">Number of learners or schools (required)</label>
-            <select id="demo-size" name="size" required value={data.size} aria-invalid={Boolean(errors.size)} aria-describedby={describedBy('size')} onChange={(e) => update('size', e.target.value)}>
+            <p id="demo-size-hint" className="hint">
+              {demoPage.fieldHints.size}
+            </p>
+            <select id="demo-size" name="size" required value={data.size} aria-invalid={Boolean(errors.size)} aria-describedby={describedBy('size', true)} onChange={(e) => update('size', e.target.value)}>
               <option value="">Select a size</option>
               {sizeOptions.map((o) => (
                 <option key={o.value} value={o.value}>

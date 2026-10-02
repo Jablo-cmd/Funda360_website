@@ -1,28 +1,54 @@
 /**
  * Site-wide configuration.
  *
- * Everything that differs between environments (local, staging, production)
- * is read from NEXT_PUBLIC_* environment variables here and nowhere else.
- * See .env.example for the full list.
+ * Everything that differs between environments (local, preview, production)
+ * is read from environment variables here and nowhere else.
+ * See .env.example and MARKETING_WEBSITE_AUDIT.md (Robots + indexing).
  */
 
 function stripTrailingSlash(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value;
 }
 
+const url = stripTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
+
+/** A real, public origin: https and not a local address. */
+const isPublicOrigin = /^https:\/\//.test(url) && !/\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|$)/.test(url);
+
+/**
+ * Indexing gate. Search engines may index the site only when BOTH:
+ *  - NEXT_PUBLIC_ALLOW_INDEXING=true (set only by the production deploy), and
+ *  - NEXT_PUBLIC_SITE_URL is a public https origin.
+ * Every other build (local, preview, CI) is noindex with robots.txt "Disallow: /".
+ */
+const allowIndexing = process.env.NEXT_PUBLIC_ALLOW_INDEXING === 'true' && isPublicOrigin;
+
 export const siteConfig = {
   name: 'Funda360',
   tagline: 'Smarter Schools. Better Outcomes.',
   /** One-sentence product definition reused in metadata and structured data. */
   description:
-    'Funda360 is a connected school management platform that brings learner, academic, attendance, finance and communication information together so school teams can manage daily work, understand what is happening and act where attention is needed.',
-  /** Company that develops Funda360. Confirm public wording before launch. */
+    'Funda360 is a connected school management platform that brings learner management, academics, attendance, fees, communication, reporting and intelligence into one system, so school teams can manage daily work, understand what is happening and act where attention is needed.',
+  /** Company that develops Funda360. */
   developer: 'Auris Nexus Technologies',
+  /**
+   * Company website and verified social profiles, used in structured data.
+   * CONFIRM: leave empty until the official URLs are confirmed. Never guess.
+   */
+  developerUrl: process.env.NEXT_PUBLIC_DEVELOPER_URL || '',
+  socialProfiles: (process.env.NEXT_PUBLIC_SOCIAL_PROFILES || '').split(',').map((s) => s.trim()).filter(Boolean),
   locale: 'en_ZA',
   language: 'en-ZA',
 
   /** Canonical origin of the marketing site (no trailing slash). */
-  url: stripTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  url,
+
+  /**
+   * Static export (GitHub Pages) serves every page at a trailing-slash URL
+   * (e.g. /platform/). Canonical URLs and the sitemap must match the served
+   * URL exactly, so they follow the same setting as next.config.ts.
+   */
+  trailingSlash: process.env.STATIC_EXPORT === '1',
 
   /**
    * The Login CTA points to the existing Funda360 application.
@@ -30,17 +56,33 @@ export const siteConfig = {
    */
   appLoginUrl: process.env.NEXT_PUBLIC_APP_LOGIN_URL || 'https://app.funda360.aurisnexus.co.za/login',
 
-  /** Request a Demo submission endpoint. Empty = not yet connected (Phase 1). */
+  /** Request a Demo submission endpoint. Empty = not yet connected. */
   demoRequestEndpoint: process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT || '',
 
-  /**
-   * Search engines are told to stay away until this is explicitly enabled,
-   * so preview/staging deployments of the skeleton are never indexed.
-   */
-  allowIndexing: process.env.NEXT_PUBLIC_ALLOW_INDEXING === 'true',
-} as const;
+  allowIndexing,
 
+  /**
+   * Draft articles are visible on non-indexed previews (for editorial review)
+   * and hidden on the indexed production site. Override with
+   * NEXT_PUBLIC_SHOW_DRAFT_CONTENT=true|false.
+   */
+  showDraftContent:
+    process.env.NEXT_PUBLIC_SHOW_DRAFT_CONTENT !== undefined ? process.env.NEXT_PUBLIC_SHOW_DRAFT_CONTENT === 'true' : !allowIndexing,
+};
+
+/**
+ * Absolute URL for a site path, matching the URL the host actually serves
+ * (trailing slash on static export; files such as /sitemap.xml unchanged).
+ */
 export function absoluteUrl(path: string): string {
   if (/^https?:\/\//.test(path)) return path;
-  return `${siteConfig.url}${path.startsWith('/') ? path : `/${path}`}`;
+  let normalised = path.startsWith('/') ? path : `/${path}`;
+  const [pathname, suffix = ''] = normalised.split(/(?=[#?])/);
+  const isFile = /\.[a-z0-9]+$/i.test(pathname);
+  if (siteConfig.trailingSlash && pathname !== '/' && !pathname.endsWith('/') && !isFile) {
+    normalised = `${pathname}/${suffix}`;
+  }
+  // The home page is the bare origin unless the host serves trailing-slash URLs (matches Next.js canonical output).
+  if (normalised === '/') return siteConfig.trailingSlash ? `${siteConfig.url}/` : siteConfig.url;
+  return `${siteConfig.url}${normalised}`;
 }

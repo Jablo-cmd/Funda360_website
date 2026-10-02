@@ -1,13 +1,8 @@
 import { ctas } from './ctas';
 import type { ProductShotKey } from './screenshots';
-import type { Feature, SeoFields } from './types';
+import type { Feature } from './types';
 
 export const homePage = {
-  seo: {
-    title: 'Funda360',
-    description:
-      'Funda360 is a connected school management platform for learners, academics, attendance, finance and communication. Smarter Schools. Better Outcomes.',
-  } satisfies SeoFields,
 
   // 1. Hero
   hero: {
@@ -15,7 +10,9 @@ export const homePage = {
     brand: 'Smarter Schools. Better Outcomes.',
     heading: 'The operating platform for modern schools.',
     intro:
-      'Funda360 brings learners, educators, academics, administration, finance, communication and school performance into one connected platform.',
+      'Funda360 is a connected school management platform that brings learner management, academics, attendance, fees, communication and reporting into one system, so school teams can manage the day, understand what is happening and act where it matters.',
+    /** Who it is for, in one line under the hero actions. */
+    audience: 'For school teams, principals and owners, education groups and the funders who support them.',
     primary: ctas.requestDemo,
     secondary: ctas.exploreFunda360,
     shot: 'dashboard' as ProductShotKey,
@@ -29,8 +26,7 @@ export const homePage = {
     id: 'introduction',
     heading: 'What is Funda360?',
     body: [
-      'Funda360 is a connected school management platform. It brings learner records, academics, attendance, fees and communication together in one place, so school teams can manage daily work, understand what is happening and act where attention is needed.',
-      'Funda360 is a web-based school management platform for schools and the people who lead, fund and support them.',
+      'Funda360 is web-based school management software for schools and the people who lead, fund and support them. It runs in the browser on computers, tablets and phones.',
       'Administrators, teachers, finance teams, leadership, parents and learners each work in their own part of the platform, and all of them rely on the same connected school information.',
     ],
   },
@@ -145,16 +141,16 @@ export const homePage = {
     note: 'Funda360 does not currently claim third-party security certification.',
   },
 
-  // 11. Impact / outcomes (qualitative only: no unverified statistics)
-  impact: {
-    id: 'impact',
-    heading: 'What connected information makes possible',
-    intro: 'The outcomes Funda360 is designed to support.',
+  // 11. Differentiation (factual, no unverified outcomes or statistics)
+  different: {
+    id: 'why-funda360',
+    heading: 'What makes Funda360 different',
+    intro: 'Designed with South African schools in mind, and precise about what it does.',
     items: [
-      { title: 'More time for teaching', description: 'Less time spent re-capturing and reconciling information.' },
-      { title: 'Earlier support for learners', description: 'Attendance and performance patterns become visible sooner.' },
-      { title: 'Better-informed leadership', description: 'Decisions based on current information, not last term’s spreadsheet.' },
-      { title: 'Closer partnership with families', description: 'Parents can see results, homework and attendance, and talk to the school.' },
+      { title: 'One record, not bolted-together tools', description: 'Learner, academic, attendance, fee and communication records live in one platform, so information captured once is used everywhere it is needed.' },
+      { title: 'Built from the daily work', description: 'Dashboards and reports read from the registers, marks and payments teams already capture, with no spreadsheets to assemble.' },
+      { title: 'Security enforced in the platform', description: 'Each school’s data is kept separate and role-based access is enforced in the database, not only hidden in the screens.' },
+      { title: 'Honest about what is available', description: 'Every capability on this site is labelled as available today, on the roadmap or still to be confirmed.' },
     ] satisfies Feature[],
     // TODO(content): add verified case studies or impact evidence when available. Do not add statistics without a source.
   },

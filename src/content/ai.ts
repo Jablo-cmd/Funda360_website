@@ -1,4 +1,4 @@
-import type { Faq, Feature, SeoFields } from './types';
+import type { Faq, Feature } from './types';
 
 /**
  * AI & Intelligence positioning.
@@ -10,11 +10,6 @@ import type { Faq, Feature, SeoFields } from './types';
  * any future intelligence depends on.
  */
 export const aiPage = {
-  seo: {
-    title: 'AI & Intelligence',
-    description:
-      'How Funda360 approaches school intelligence: connected school information that helps people understand what is happening and identify where attention may be needed. What is available today and what is on the roadmap.',
-  } satisfies SeoFields,
   hero: {
     eyebrow: 'AI & Intelligence',
     heading: 'Intelligence starts with connected school information',

@@ -1,12 +1,13 @@
 import { legalPages } from '@/content/legal';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
-import { Placeholder } from '@/components/ui/Placeholder';
+import { seoFor } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
+import { PageSchema } from '@/components/ui/PageSchema';
 
 const page = legalPages.privacy;
 
 // noindex until the final policy text is supplied.
-export const metadata = pageMetadata({ ...page.seo, path: '/privacy', noIndex: true });
+export const metadata = pageMetadata(seoFor('/privacy'));
 
 export default function PrivacyPage() {
   return (
@@ -20,9 +21,15 @@ export default function PrivacyPage() {
       </section>
       <div className="section">
         <div className="container container--narrow prose">
-          <Placeholder>{page.placeholder}</Placeholder>
+          <p className="lead">{page.status}</p>
+          <ul className="bullets">
+            {page.facts.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
         </div>
       </div>
+      <PageSchema path="/privacy" />
     </>
   );
 }

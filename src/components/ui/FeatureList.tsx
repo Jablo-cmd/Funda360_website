@@ -1,6 +1,7 @@
 import { ArrowRight, Check, CircleDashed } from 'lucide-react';
 import Link from 'next/link';
 import type { Feature } from '@/content/types';
+import { linkLabelFor } from '@/lib/links';
 import { AvailabilityBadge } from './AvailabilityBadge';
 
 type Item = Feature & { href?: string };
@@ -58,7 +59,7 @@ export function FeatureList({ items, level = 3, showAvailable = false, layout = 
           {item.href ? (
             <p>
               <Link href={item.href} className="item__more">
-                Learn more<span className="visually-hidden"> about {item.title}</span>
+                {linkLabelFor(item.href)}
                 <ArrowRight size={16} aria-hidden="true" />
               </Link>
             </p>

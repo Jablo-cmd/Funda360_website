@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { capabilityPages } from '@/content/platform';
 import { CapabilityPageTemplate } from '@/components/templates/CapabilityPageTemplate';
+import { seoFor, type SeoPath } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
 
 type Params = { params: Promise<{ slug: string }> };
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
   const page = capabilityPages.find((p) => p.slug === slug);
   if (!page) return {};
-  return pageMetadata({ ...page.seo, path: `/platform/${page.slug}` });
+  return pageMetadata(seoFor(`/platform/${page.slug}` as SeoPath));
 }
 
 export default async function CapabilityPage({ params }: Params) {

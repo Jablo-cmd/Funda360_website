@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { siteConfig } from '@/config/site';
-import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
+import { siteGraphJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { MotionObserver } from '@/components/layout/MotionObserver';
@@ -12,7 +12,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: { default: `${siteConfig.name} | ${siteConfig.tagline}`, template: `%s | ${siteConfig.name}` },
+  title: { default: `${siteConfig.name} | School Management Platform for Modern Schools`, template: `%s | ${siteConfig.name}` },
   description: siteConfig.description,
   applicationName: siteConfig.name,
 };
@@ -40,8 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <SiteFooter />
         <MotionObserver />
-        <JsonLd data={organizationJsonLd()} />
-        <JsonLd data={websiteJsonLd()} />
+        <JsonLd data={siteGraphJsonLd()} />
       </body>
     </html>
   );

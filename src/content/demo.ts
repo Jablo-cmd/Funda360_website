@@ -1,20 +1,32 @@
-import type { SeoFields } from './types';
 
 export const demoPage = {
-  seo: {
-    title: 'Request a Demo',
-    description:
-      'Request a Funda360 demo. Tell us about your school, group or programme and the Funda360 team will arrange a walkthrough focused on what matters to you.',
-  } satisfies SeoFields,
   hero: {
     eyebrow: 'Request a Demo',
     heading: 'Ready to see Funda360 in action?',
     intro: 'Tell us a little about your organisation and what you would like to see. The Funda360 team will contact you to arrange a walkthrough.',
   },
+  covers: {
+    heading: 'What the demo covers',
+    items: [
+      'The parts of Funda360 that matter to your role, using real product screens and a fictional demo school.',
+      'How the platform would fit your school, group or programme.',
+      'Onboarding, data migration, security and data protection questions.',
+      'What is available today and what is on the roadmap.',
+    ],
+  },
+  audience: 'For principals, school owners, administrators, finance and admissions teams, education groups and funders.',
+  whyWeAsk: {
+    heading: 'Why we ask for this information',
+    body: 'Your role, the size of your school or group and your interests let us tailor the walkthrough. Your phone number and message are optional. We use your details only to respond to your request.',
+  },
+  fieldHints: {
+    role: 'So we can focus the demo on your work.',
+    size: 'So we can show the right setup for one school or a group.',
+  },
   expectations: {
-    heading: 'What to expect',
+    heading: 'What happens next',
     steps: [
-      'We review your request and contact you to agree a time.',
+      'We review your request and contact you by email to agree a time.',
       'We walk through the parts of Funda360 most relevant to you.',
       'We discuss your school’s needs, onboarding and next steps.',
     ],

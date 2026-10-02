@@ -6,11 +6,13 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { CtaBanner } from '@/components/ui/CtaBanner';
 import { FeatureList } from '@/components/ui/FeatureList';
 import { PageHero } from '@/components/ui/PageHero';
-import { Placeholder } from '@/components/ui/Placeholder';
+import Link from 'next/link';
 import { Section } from '@/components/ui/Section';
+import { seoFor } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
+import { PageSchema } from '@/components/ui/PageSchema';
 
-export const metadata = pageMetadata({ ...aboutPage.seo, path: '/about' });
+export const metadata = pageMetadata(seoFor('/about'));
 
 // Presentation-only icons for the values, in content order.
 const VALUE_ICONS = [UserCheck, Lock, Compass, MapPin];
@@ -59,10 +61,13 @@ export default function AboutPage() {
 
       <Section id="company" eyebrow="Company" heading={aboutPage.company.heading}>
         <p className="lead">{aboutPage.company.body}</p>
-        <Placeholder>{aboutPage.company.placeholder}</Placeholder>
+        <p>
+          <Link href="/security">How Funda360 protects school information</Link> · <Link href="/ai">How Funda360 approaches AI</Link>
+        </p>
       </Section>
 
       <CtaBanner />
+      <PageSchema path="/about" type="AboutPage" />
     </>
   );
 }

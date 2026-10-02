@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarCheck, MessagesSquare, MonitorPlay } from 'lucide-react';
+import { ArrowRight, CalendarCheck, Check, MessagesSquare, MonitorPlay } from 'lucide-react';
 import Link from 'next/link';
 import { ctas } from '@/content/ctas';
 import { demoPage } from '@/content/demo';
@@ -6,9 +6,11 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { CtaLink } from '@/components/ui/CtaLink';
 import { ProductShot } from '@/components/ui/ProductShot';
 import { DemoRequestForm } from '@/components/forms/DemoRequestForm';
+import { seoFor } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
+import { PageSchema } from '@/components/ui/PageSchema';
 
-export const metadata = pageMetadata({ ...demoPage.seo, path: '/request-demo' });
+export const metadata = pageMetadata(seoFor('/request-demo'));
 
 // Presentation-only icons for the three expectation steps.
 const STEP_ICONS = [CalendarCheck, MonitorPlay, MessagesSquare];
@@ -22,6 +24,7 @@ export default function RequestDemoPage() {
           <p className="eyebrow">{demoPage.hero.eyebrow}</p>
           <h1 id="page-title">{demoPage.hero.heading}</h1>
           <p className="lead">{demoPage.hero.intro}</p>
+          <p className="demo-hero__audience">{demoPage.audience}</p>
         </div>
       </section>
 
@@ -32,7 +35,18 @@ export default function RequestDemoPage() {
             <DemoRequestForm />
           </section>
 
-          <aside aria-labelledby="expectations-heading" className="demo-aside">
+          <aside aria-labelledby="covers-heading" className="demo-aside">
+            <div className="demo-aside__block">
+              <h2 id="covers-heading">{demoPage.covers.heading}</h2>
+              <ul className="check-list">
+                {demoPage.covers.items.map((item) => (
+                  <li key={item}>
+                    <Check size={20} strokeWidth={2.25} aria-hidden="true" />
+                    <p>{item}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div className="demo-aside__block">
               <h2 id="expectations-heading">{demoPage.expectations.heading}</h2>
               <ol className="check-list">
@@ -48,6 +62,10 @@ export default function RequestDemoPage() {
               </ol>
             </div>
             <div className="demo-aside__block">
+              <h2>{demoPage.whyWeAsk.heading}</h2>
+              <p>{demoPage.whyWeAsk.body}</p>
+            </div>
+            <div className="demo-aside__block">
               <ProductShot shot="dashboard" caption={false} />
               <p className="meta spaced-top-sm">The Funda360 leadership dashboard, shown with a fictional demo school.</p>
             </div>
@@ -60,9 +78,10 @@ export default function RequestDemoPage() {
               <h2>Not ready for a demo?</h2>
               <ul className="stack">
                 {[
-                  { href: '/platform', label: 'Explore the platform' },
+                  { href: '/platform', label: 'Explore the Funda360 platform' },
                   { href: '/solutions', label: 'Find the solution for your role' },
-                  { href: '/resources', label: 'Read our insights' },
+                  { href: '/security', label: 'Read how Funda360 protects school information' },
+                  { href: '/resources', label: 'Read insights for schools' },
                 ].map((link) => (
                   <li key={link.href}>
                     <Link href={link.href} className="item__more">
@@ -76,6 +95,7 @@ export default function RequestDemoPage() {
           </aside>
         </div>
       </div>
+      <PageSchema path="/request-demo" type="ContactPage" />
     </>
   );
 }

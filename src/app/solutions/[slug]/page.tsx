@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { solutionPages } from '@/content/solutions';
 import { SolutionPageTemplate } from '@/components/templates/SolutionPageTemplate';
+import { seoFor, type SeoPath } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
 
 type Params = { params: Promise<{ slug: string }> };
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
   const page = solutionPages.find((p) => p.slug === slug);
   if (!page) return {};
-  return pageMetadata({ ...page.seo, path: `/solutions/${page.slug}` });
+  return pageMetadata(seoFor(`/solutions/${page.slug}` as SeoPath));
 }
 
 export default async function SolutionPage({ params }: Params) {

@@ -1,34 +1,30 @@
 import type { MetadataRoute } from 'next';
 import { absoluteUrl } from '@/config/site';
-import { capabilityPages } from '@/content/platform';
-import { articles, categories } from '@/content/resources';
-import { solutionPages } from '@/content/solutions';
+import { categories, categoryIsIndexable, publishedArticles } from '@/content/resources';
+import { routeSeo } from '@/content/seo';
 
 export const dynamic = 'force-static';
 
 /**
- * Sitemap of every indexable page. Utility pages (/login, legal placeholders)
- * and draft articles are deliberately excluded.
+ * Every indexable URL, at the exact URL the host serves, with the date its
+ * content last changed. Excluded: noindex utility and placeholder pages
+ * (/login, /privacy, /terms), draft articles and categories without a
+ * published article. Priority/changefreq are omitted: search engines ignore
+ * them and they invite manipulation.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const entry = (path: string, priority: number, changeFrequency: 'weekly' | 'monthly' = 'monthly', lastModified?: string) => ({
-    url: absoluteUrl(path),
-    priority,
-    changeFrequency,
-    ...(lastModified ? { lastModified } : {}),
-  });
+  const staticRoutes = Object.values(routeSeo)
+    .filter((r) => !('noIndex' in r && r.noIndex))
+    .map((r) => ({ url: absoluteUrl(r.path), lastModified: r.lastModified }));
 
-  return [
-    entry('/', 1, 'weekly'),
-    entry('/platform', 0.9),
-    ...capabilityPages.map((p) => entry(`/platform/${p.slug}`, 0.8)),
-    entry('/ai', 0.8),
-    entry('/solutions', 0.8),
-    ...solutionPages.map((p) => entry(`/solutions/${p.slug}`, 0.8)),
-    entry('/about', 0.6),
-    entry('/resources', 0.7, 'weekly'),
-    ...categories.map((c) => entry(`/resources/category/${c.slug}`, 0.5, 'weekly')),
-    ...articles.filter((a) => a.status === 'published').map((a) => entry(`/resources/${a.slug}`, 0.6, 'monthly', a.updatedAt ?? a.publishedAt)),
-    entry('/request-demo', 0.9),
-  ];
+  const articles = publishedArticles();
+  const categoryRoutes = categories
+    .filter((c) => categoryIsIndexable(c.slug))
+    .map((c) => {
+      const latest = articles.filter((a) => a.category === c.slug).map((a) => a.updatedAt ?? a.publishedAt).sort().pop();
+      return { url: absoluteUrl(`/resources/category/${c.slug}`), lastModified: latest };
+    });
+  const articleRoutes = articles.map((a) => ({ url: absoluteUrl(`/resources/${a.slug}`), lastModified: a.updatedAt ?? a.publishedAt }));
+
+  return [...staticRoutes, ...categoryRoutes, ...articleRoutes];
 }

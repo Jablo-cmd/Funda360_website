@@ -1,5 +1,5 @@
 import type { ProductShotKey } from './screenshots';
-import type { Availability, Faq, Feature, Section, SeoFields, Workflow } from './types';
+import type { Availability, Faq, Feature, Section, Workflow } from './types';
 
 /* ------------------------------------------------------------------ */
 /* Platform overview: the twelve capability areas                      */
@@ -148,16 +148,11 @@ export const platformAreaDetails: Record<string, Feature[]> = {
 };
 
 export const platformOverview = {
-  seo: {
-    title: 'The Funda360 Platform',
-    description:
-      'Explore the Funda360 school management platform: learners, educators, academics, assessments, attendance, finance, communication, administration, analytics, reporting, roles and AI.',
-  } satisfies SeoFields,
   hero: {
     eyebrow: 'Platform',
     heading: 'One connected platform for the whole school',
     intro:
-      'Funda360 brings the core work of a school into one system. Each area works on its own, and because they share the same learner, class and school records, information captured once can be used everywhere it is needed.',
+      'Funda360 is school management software that brings the core work of a school into one system. Each area works on its own, and because they share the same learner, class and school records, information captured once can be used everywhere it is needed.',
   },
   connected: {
     id: 'how-it-connects',
@@ -214,7 +209,6 @@ export const platformOverview = {
 export type CapabilityPageContent = {
   slug: string;
   navLabel: string;
-  seo: SeoFields;
   hero: { eyebrow: string; heading: string; intro: string };
   problem: { heading: string; body: string; points: string[] };
   capabilities: { heading: string; intro: string; items: Feature[] };
@@ -224,17 +218,32 @@ export type CapabilityPageContent = {
   /** Slugs of related capability pages, plus optional other links. */
   related: { label: string; href: string; description: string }[];
   faqs: Faq[];
+  /** Category definition in plain language: answers "what is …?" for search visitors. */
+  overview: { heading: string; body: string[] };
+  /** Who uses this capability and how. */
+  users: { role: string; description: string }[];
+  /** Audience solutions this capability matters most to (solution slugs). */
+  solutions: string[];
 };
 
 export const capabilityPages: CapabilityPageContent[] = [
   {
     slug: 'learner-management',
     navLabel: 'Learner Management',
-    seo: {
-      title: 'Learner Management',
-      description:
-        'Manage learner profiles, enrolment, guardians, documents, admissions and learner wellbeing records in one connected Funda360 learner record.',
+    overview: {
+      heading: 'What is a learner management system?',
+      body: [
+        'A learner management system, often called a student information system, is a school’s central record of every learner: who they are, where they are enrolled, who their guardians are and what the school needs to know about them.',
+        'In Funda360 that record is the foundation for everything else. Classes, attendance, assessments, fees and communication all refer back to the same learner, so information captured at admission is available wherever it is needed, to the people allowed to see it.',
+      ],
     },
+    users: [
+      { role: 'Admissions staff', description: 'Review online applications and required documents, then convert accepted applications into enrolled learners.' },
+      { role: 'School administrators', description: 'Maintain learner records, guardians, documents and status changes, and import existing learner lists.' },
+      { role: 'Teachers', description: 'See the learners in their classes, with the context their role allows.' },
+      { role: 'Guardians', description: 'See their own child’s information in the parent portal.' },
+    ],
+    solutions: ['schools', 'school-leadership', 'education-groups'],
     hero: {
       eyebrow: 'Platform · Learner Management',
       heading: 'Every learner, one complete record',
@@ -314,11 +323,20 @@ export const capabilityPages: CapabilityPageContent[] = [
   {
     slug: 'academics-assessments',
     navLabel: 'Academics & Assessments',
-    seo: {
-      title: 'Academics & Assessments',
-      description:
-        'Set up academic years, classes, subjects and timetables, capture assessments and results, manage homework and produce governed report cards with Funda360.',
+    overview: {
+      heading: 'What is academic and assessment management?',
+      body: [
+        'Academic management is how a school organises teaching: academic years, terms, grades, classes, subjects, teaching assignments and timetables. Assessment management is what follows: setting assessments, capturing results and turning them into report cards.',
+        'Funda360 keeps both in one academic management system, so marks captured by teachers flow into governed report cards without re-typing.',
+      ],
     },
+    users: [
+      { role: 'Teachers', description: 'See today’s lessons, take registers, publish homework, capture marks and write report-card comments.' },
+      { role: 'Heads of department', description: 'Review report cards for their subjects before approval.' },
+      { role: 'Principals and deputies', description: 'Approve and publish report cards and follow academic and assessment reports.' },
+      { role: 'Parents and learners', description: 'See published results, homework and report cards in their portals.' },
+    ],
+    solutions: ['schools', 'school-leadership'],
     hero: {
       eyebrow: 'Platform · Academics & Assessments',
       heading: 'From timetable to report card, in one place',
@@ -399,11 +417,20 @@ export const capabilityPages: CapabilityPageContent[] = [
   {
     slug: 'attendance',
     navLabel: 'Attendance',
-    seo: {
-      title: 'Attendance',
-      description:
-        'Capture daily class attendance, follow attendance trends and receive attendance alerts with Funda360, connected to learner records and report cards.',
+    overview: {
+      heading: 'What is school attendance management?',
+      body: [
+        'School attendance management is the daily work of recording which learners are present, absent or late, and using that record to notice patterns and follow up with families.',
+        'In Funda360 teachers take digital class registers, and every mark is connected to the learner’s record. Attendance then appears in reports and on the leadership dashboard, flows into report cards and reaches guardians through in-app notifications.',
+      ],
     },
+    users: [
+      { role: 'Teachers', description: 'Take the daily register for their own classes.' },
+      { role: 'Principals and management', description: 'Record across the school, follow trends and see where attendance needs attention.' },
+      { role: 'Guardians', description: 'Receive in-app notifications about their child’s attendance and see it in the parent portal.' },
+      { role: 'Learners', description: 'See their own attendance in the learner portal.' },
+    ],
+    solutions: ['schools', 'school-leadership', 'funders'],
     hero: {
       eyebrow: 'Platform · Attendance',
       heading: 'Know who is in class, and notice patterns early',
@@ -427,7 +454,9 @@ export const capabilityPages: CapabilityPageContent[] = [
         { title: 'Role-appropriate capture', description: 'Teachers record their own classes; management can record across the school.' },
         { title: 'Attendance reports', description: 'Attendance reporting with trend charts and CSV export.' },
         { title: 'Dashboard overview', description: 'Attendance summaries on the leadership dashboard.' },
-        { title: 'Attendance alerts', description: 'Alerts and notification records when attendance needs attention.' },
+        { title: 'Guardian notifications', description: 'Guardians receive an in-app notification when their child is marked present, absent or late.' },
+        { title: 'Absence alerts', description: 'Guardians are alerted after three consecutive school days of absence.' },
+        { title: 'Attention flags', description: 'Learners below the attendance threshold are flagged on their profile and in the attendance report.' },
         { title: 'Parent and learner visibility', description: 'Guardians and learners can see attendance in their portals.' },
         { title: 'Report-card snapshots', description: 'Attendance is carried into report cards automatically.' },
         { title: 'Staff attendance', description: 'Staff attendance is recorded in Educator Management.' },
@@ -449,7 +478,7 @@ export const capabilityPages: CapabilityPageContent[] = [
           title: 'Following up on attendance',
           steps: [
             'Leadership reviews attendance trends on the dashboard or in the attendance report.',
-            'Attendance alerts highlight where attention may be needed.',
+            'Learners below the attendance threshold are flagged, and guardians are alerted after three consecutive absences.',
             'Staff follow up with guardians using Funda360 messaging.',
           ],
         },
@@ -479,11 +508,19 @@ export const capabilityPages: CapabilityPageContent[] = [
   {
     slug: 'finance',
     navLabel: 'Fees & Finance',
-    seo: {
-      title: 'Fees & Finance',
-      description:
-        'Manage school fees with Funda360: fee structures, charges, payments, discounts, statements, ageing, collections reporting and bank-statement reconciliation.',
+    overview: {
+      heading: 'What is school fee management?',
+      body: [
+        'School fee management is how a school bills learner accounts, records payments, applies discounts and bursaries, and keeps track of what is outstanding.',
+        'Funda360 keeps a fee ledger for every learner account, connected to the same learner records the rest of the school uses, so the finance office and leadership work from one set of numbers.',
+      ],
     },
+    users: [
+      { role: 'Finance office and bursars', description: 'Set up fee structures, raise charges, record payments, produce statements and reconcile the bank statement.' },
+      { role: 'Principals and owners', description: 'Follow the collection position and ageing from the finance overview.' },
+      { role: 'Parents', description: 'See fee information for their children in the parent portal.' },
+    ],
+    solutions: ['schools', 'school-leadership'],
     hero: {
       eyebrow: 'Platform · Fees & Finance',
       heading: 'School fees, clearly accounted for',
@@ -568,11 +605,20 @@ export const capabilityPages: CapabilityPageContent[] = [
   {
     slug: 'communication',
     navLabel: 'Communication',
-    seo: {
-      title: 'Communication',
-      description:
-        'Funda360 messaging, announcements and notifications connect staff, parents and learners, with role-aware rules and personal notification preferences.',
+    overview: {
+      heading: 'What is a school communication platform?',
+      body: [
+        'A school communication platform gives staff, parents and learners one place to message each other, receive announcements and be notified about what matters, instead of scattered personal channels and outdated contact lists.',
+        'In Funda360 communication runs on current learner, guardian and class records, and parents and learners each have their own portal.',
+      ],
     },
+    users: [
+      { role: 'Teachers and staff', description: 'Message colleagues and guardians, individually or in groups.' },
+      { role: 'Leadership', description: 'Make announcements to staff, guardians or everyone.' },
+      { role: 'Parents', description: 'Message staff and see announcements, notifications and their children’s information in the parent portal.' },
+      { role: 'Learners', description: 'See announcements, homework and notifications in the learner portal.' },
+    ],
+    solutions: ['schools', 'school-leadership'],
     hero: {
       eyebrow: 'Platform · Communication',
       heading: 'School communication, connected to the right people',
@@ -595,7 +641,7 @@ export const capabilityPages: CapabilityPageContent[] = [
         { title: 'Direct and group messaging', description: 'Conversations between staff, and between staff and guardians, with attachments.' },
         { title: 'Role-aware rules', description: 'Staff can message anyone in the school; guardians can message staff.' },
         { title: 'Announcements', description: 'School announcements to defined audiences.' },
-        { title: 'In-app notifications', description: 'Notifications for events such as homework, report cards and attendance.' },
+        { title: 'In-app notifications', description: 'Notifications for events such as homework and attendance.' },
         { title: 'Notification preferences', description: 'Each person chooses channels and quiet hours.' },
         {
           title: 'Email, SMS and WhatsApp delivery',
@@ -647,11 +693,20 @@ export const capabilityPages: CapabilityPageContent[] = [
   {
     slug: 'analytics',
     navLabel: 'Analytics & Reporting',
-    seo: {
-      title: 'Performance Analytics & Reporting',
-      description:
-        'Funda360 role-based dashboards and reports for learners, staff, academics, assessments, attendance and finance, with CSV exports and report-card PDFs.',
+    overview: {
+      heading: 'What are school analytics and reporting?',
+      body: [
+        'School analytics and reporting turn the records a school keeps every day into summaries leadership can act on: who is enrolled, how attendance is trending, how classes are performing and what the fee collection position is.',
+        'Because Funda360 records daily school work in one place, its dashboards and reports read from the same data, with no separate spreadsheets to assemble.',
+      ],
     },
+    users: [
+      { role: 'Principals and leadership', description: 'Follow learners, staff, attendance and fee collection on the leadership dashboard.' },
+      { role: 'Finance', description: 'Use the finance dashboard and collection reporting.' },
+      { role: 'HR', description: 'Use staff reports and the HR dashboard.' },
+      { role: 'Admissions', description: 'Follow applications on the admissions dashboard.' },
+    ],
+    solutions: ['school-leadership', 'education-groups', 'funders'],
     hero: {
       eyebrow: 'Platform · Analytics & Reporting',
       heading: 'See what is happening across your school',

@@ -65,6 +65,7 @@ export function ProductShot({ shot, showBrief = true, priority = false, caption 
       {caption ? (
         <figcaption>
           <span className="product-shot__title">{spec.title}</span>
+          {spec.caption ? <span className="product-shot__caption">{spec.caption}</span> : null}
           {spec.src ? <span className="product-shot__demo">Real product · fictional demo data</span> : null}
           {showBrief && !spec.src ? <span className="product-shot__brief">Brief: {spec.brief}</span> : null}
         </figcaption>

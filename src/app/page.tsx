@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Database, Fingerprint, KeyRound, Lock, ScrollText, ShieldCheck } from 'lucide-react';
 import { aiPage } from '@/content/ai';
 import { ctas } from '@/content/ctas';
@@ -15,15 +16,18 @@ import { CapabilityGroups } from '@/components/story/CapabilityGroups';
 import { ConnectedHub } from '@/components/story/ConnectedHub';
 import { MuaStory } from '@/components/story/MuaStory';
 import { ProductTour } from '@/components/story/ProductTour';
+import { seoFor } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
+import { PageSchema } from '@/components/ui/PageSchema';
 
-export const metadata = pageMetadata({ ...homePage.seo, path: '/' });
+export const metadata = pageMetadata(seoFor('/'));
 
 // Presentation-only icons for the trust items, in content order.
 const TRUST_ICONS = [Database, KeyRound, ShieldCheck, ScrollText, Fingerprint, Lock];
 
 export default function HomePage() {
   const { hero } = homePage;
+  const insights = sortedArticles().slice(0, 3);
   return (
     <>
       {/* 1. Hero */}
@@ -39,6 +43,7 @@ export default function HomePage() {
               <CtaLink cta={hero.primary} arrow />
               <CtaLink cta={hero.secondary} variant="secondary" />
             </div>
+            <p className="home-hero__audience">{hero.audience}</p>
             <ul className="module-strip" aria-label="Connected in one platform">
               {hero.modules.map((module) => (
                 <li key={module}>{module}</li>
@@ -82,6 +87,15 @@ export default function HomePage() {
               {String(index + 1).padStart(2, '0')}
             </span>
           )}
+        />
+      </Section>
+
+      {/* 3b. Who it is for: solutions by audience */}
+      <Section id={homePage.solutions.id} eyebrow="Solutions" heading={homePage.solutions.heading} intro={homePage.solutions.intro}>
+        <LinkCardList
+          variant="audience"
+          columns={2}
+          items={solutionPages.map((s) => ({ label: s.navLabel, title: s.tagline, description: s.summary, meta: s.audience, href: `/solutions/${s.slug}` }))}
         />
       </Section>
 
@@ -132,15 +146,6 @@ export default function HomePage() {
         </div>
       </Section>
 
-      {/* 9. Solutions by audience */}
-      <Section id={homePage.solutions.id} eyebrow="Solutions" heading={homePage.solutions.heading} intro={homePage.solutions.intro}>
-        <LinkCardList
-          variant="audience"
-          columns={2}
-          items={solutionPages.map((s) => ({ label: s.navLabel, title: s.tagline, description: s.summary, meta: s.audience, href: `/solutions/${s.slug}` }))}
-        />
-      </Section>
-
       {/* 10. Trust & security */}
       <Section id={homePage.trust.id} tone="navy" eyebrow="Trust and security" heading={homePage.trust.heading} intro={homePage.trust.intro}>
         <ul className="trust-list">
@@ -159,13 +164,15 @@ export default function HomePage() {
             );
           })}
         </ul>
-        <p className="trust-note">{homePage.trust.note}</p>
+        <p className="trust-note">
+          {homePage.trust.note} <Link href="/security">How Funda360 protects school information</Link>
+        </p>
       </Section>
 
-      {/* 11. Education impact / outcomes */}
-      <Section id={homePage.impact.id} eyebrow="Outcomes" heading={homePage.impact.heading} intro={homePage.impact.intro}>
+      {/* 11. What makes Funda360 different (factual) */}
+      <Section id={homePage.different.id} eyebrow="Why Funda360" heading={homePage.different.heading} intro={homePage.different.intro}>
         <ul className="outcomes">
-          {homePage.impact.items.map((item) => (
+          {homePage.different.items.map((item) => (
             <li key={item.title}>
               <h3>{item.title}</h3>
               <p>{item.description}</p>
@@ -174,16 +181,19 @@ export default function HomePage() {
         </ul>
       </Section>
 
-      {/* 12. Resources / insights */}
+      {/* 12. Resources / insights (only once articles are visible) */}
+      {insights.length ? (
       <Section id={homePage.resources.id} tone="muted" eyebrow="Resources" heading={homePage.resources.heading} intro={homePage.resources.intro}>
-        <ArticleList articles={sortedArticles().slice(0, 3)} />
+        <ArticleList articles={insights} />
         <div className="section__footer">
           <CtaLink cta={homePage.resources.link} variant="secondary" arrow />
         </div>
       </Section>
+      ) : null}
 
       {/* 13. Request a demo CTA */}
       <CtaBanner heading="Ready to see Funda360 in action?" secondary={ctas.exploreSolutions} />
+      <PageSchema path="/" breadcrumb={false} />
     </>
   );
 }

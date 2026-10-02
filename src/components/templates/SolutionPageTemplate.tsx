@@ -1,6 +1,8 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { ctas } from '@/content/ctas';
+import { articlesForPage } from '@/content/resources';
+import type { SeoPath } from '@/content/seo';
 import type { SolutionPageContent, SolutionSection } from '@/content/solutions';
 import { AreaIcon } from '@/components/ui/AreaIcon';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
@@ -11,6 +13,9 @@ import { LinkCardList } from '@/components/ui/LinkCardList';
 import { PageHero } from '@/components/ui/PageHero';
 import { ProductShot, ProductShotGallery } from '@/components/ui/ProductShot';
 import { Section } from '@/components/ui/Section';
+import { ArticleList } from '@/components/ui/ArticleList';
+import { PageSchema } from '@/components/ui/PageSchema';
+import { capabilityCard, linkLabelFor } from '@/lib/links';
 
 /** Section-kind eyebrows (presentation labels). */
 const EYEBROWS: Record<SolutionSection['kind'], string> = {
@@ -29,6 +34,9 @@ const EYEBROWS: Record<SolutionSection['kind'], string> = {
  * shaped around their questions rather than one duplicated layout.
  */
 export function SolutionPageTemplate({ page }: { page: SolutionPageContent }) {
+  const path = `/solutions/${page.slug}`;
+  const capabilities = page.capabilityLinks.map(capabilityCard).filter((c) => c !== null);
+  const reading = articlesForPage(path);
   return (
     <>
       <Breadcrumbs trail={[{ name: 'Solutions', path: '/solutions' }, { name: page.navLabel, path: `/solutions/${page.slug}` }]} />
@@ -47,13 +55,31 @@ export function SolutionPageTemplate({ page }: { page: SolutionPageContent }) {
         </p>
       </PageHero>
 
+      <Section id="why" eyebrow={page.navLabel} heading={page.why.heading}>
+        <FeatureList items={page.why.points} columns={3} />
+      </Section>
+
       {page.sections.map((section, index) => (
         <SolutionSectionView key={`${section.kind}-${index}`} section={section} id={`${section.kind}-${index + 1}`} muted={index % 2 === 0} />
       ))}
 
+      <Section id="platform-capabilities" eyebrow="The platform" heading={`Funda360 capabilities for ${page.navLabel}`}>
+        <LinkCardList
+          columns={capabilities.length > 4 ? 3 : 2}
+          items={capabilities.map((c) => ({ ...c, icon: <AreaIcon id={c.href.split('/').pop() ?? ''} /> }))}
+        />
+      </Section>
+
+      {reading.length ? (
+        <Section id="related-reading" tone="muted" eyebrow="Insights" heading="Related reading">
+          <ArticleList articles={reading} />
+        </Section>
+      ) : null}
+
       <FaqSection faqs={page.faqs} />
 
       <CtaBanner heading={page.cta.heading} body={page.cta.body} secondary={ctas.exploreSolutions} />
+      <PageSchema path={path as SeoPath} />
     </>
   );
 }
@@ -130,7 +156,7 @@ function SolutionSectionView({ section, id, muted }: { section: SolutionSection;
                 {item.href ? (
                   <p>
                     <Link href={item.href} className="item__more">
-                      Learn more<span className="visually-hidden">: {item.question}</span>
+                      {linkLabelFor(item.href)}
                       <ArrowRight size={16} aria-hidden="true" />
                     </Link>
                   </p>

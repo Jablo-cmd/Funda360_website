@@ -10,15 +10,16 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { CtaBanner } from '@/components/ui/CtaBanner';
 import { FaqSection } from '@/components/ui/FaqList';
 import { FeatureList } from '@/components/ui/FeatureList';
-import { JsonLd } from '@/components/ui/JsonLd';
 import { PageHero } from '@/components/ui/PageHero';
 import { ProductShot } from '@/components/ui/ProductShot';
 import { Section } from '@/components/ui/Section';
 import { CapabilityGroups } from '@/components/story/CapabilityGroups';
 import { ConnectedHub } from '@/components/story/ConnectedHub';
-import { pageMetadata, softwareApplicationJsonLd } from '@/lib/seo';
+import { seoFor } from '@/content/seo';
+import { pageMetadata } from '@/lib/seo';
+import { PageSchema } from '@/components/ui/PageSchema';
 
-export const metadata = pageMetadata({ ...platformOverview.seo, path: '/platform' });
+export const metadata = pageMetadata(seoFor('/platform'));
 
 /** Real product screen shown beside each area (presentation choice; areas without one show their detail list). */
 const AREA_SHOTS: Partial<Record<string, ProductShotKey>> = {
@@ -117,7 +118,7 @@ export default function PlatformPage() {
 
       <FaqSection faqs={platformOverview.faqs} />
       <CtaBanner secondary={ctas.exploreAi} />
-      <JsonLd data={softwareApplicationJsonLd()} />
+      <PageSchema path="/platform" items={platformAreas.map((a) => ({ name: a.title, path: a.href ?? `/platform#${a.id}` }))} />
     </>
   );
 }

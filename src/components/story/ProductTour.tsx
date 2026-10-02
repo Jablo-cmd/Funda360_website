@@ -45,7 +45,7 @@ export function ProductTour({ items, label }: { items: TourItem[]; label: string
 
   return (
     <div className="tour">
-      <div className="tour__tabs" role="tablist" aria-label={label} onKeyDown={onKeyDown}>
+      <div className="tour__tabs" role="tablist" aria-label={label}>
         {items.map((item, index) => (
           <button
             key={item.id}
@@ -60,6 +60,7 @@ export function ProductTour({ items, label }: { items: TourItem[]; label: string
             aria-controls={`tour-panel-${item.id}`}
             tabIndex={index === active ? 0 : -1}
             onClick={() => setActive(index)}
+            onKeyDown={onKeyDown}
           >
             {item.label}
           </button>

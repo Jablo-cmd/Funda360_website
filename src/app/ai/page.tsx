@@ -10,9 +10,11 @@ import { PageHero } from '@/components/ui/PageHero';
 import { ProductShot } from '@/components/ui/ProductShot';
 import { Section } from '@/components/ui/Section';
 import { StepList } from '@/components/ui/StepList';
+import { seoFor } from '@/content/seo';
 import { pageMetadata } from '@/lib/seo';
+import { PageSchema } from '@/components/ui/PageSchema';
 
-export const metadata = pageMetadata({ ...aiPage.seo, path: '/ai' });
+export const metadata = pageMetadata(seoFor('/ai'));
 
 // Presentation-only icons for the four principles, in content order.
 const PRINCIPLE_ICONS = [Users, Eye, Lock, Compass];
@@ -69,6 +71,7 @@ export default function AiPage() {
 
       <FaqSection faqs={aiPage.faqs} />
       <CtaBanner heading="Talk to us about school intelligence" body="See the connected foundation available today and discuss where Funda360 intelligence is heading." />
+      <PageSchema path="/ai" />
     </>
   );
 }

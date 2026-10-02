@@ -58,6 +58,8 @@ export type ProductShotSpec = {
   title: string;
   /** Mandatory alt text describing what the final screenshot will show. */
   alt: string;
+  /** Marketing caption: the practical value this screen shows (one sentence). */
+  caption?: string;
   /** What the screenshot must show (brief for whoever captures it). */
   brief: string;
   /** Application screen to capture from (reference only). */

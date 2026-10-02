@@ -1,25 +1,25 @@
-import type { SeoFields } from './types';
-
 /**
- * Legal pages are placeholders. Their final text must come from the company's
- * legal/compliance owner; nothing here is legal advice or final policy.
+ * Legal pages. The final policy text must come from the company's legal and
+ * compliance owner (see MARKETING_WEBSITE_AUDIT.md: CONFIRM). Until then these
+ * pages state, accurately, what the website does today. Both are noindex.
  */
 export const legalPages = {
   privacy: {
-    seo: {
-      title: 'Privacy Policy',
-      description: 'The Funda360 website privacy policy. Placeholder pending legal review.',
-    } satisfies SeoFields,
     heading: 'Privacy policy',
-    placeholder:
-      'The final privacy policy for this website will be supplied by the Funda360 legal and compliance owner before launch. It must cover the Request a Demo form, analytics (if any) and cookies (if any), in line with POPIA.',
+    status: 'The full privacy policy for this website is being finalised with our legal and compliance advisers. Until it is published, this page summarises what the website does today.',
+    facts: [
+      'This website does not set analytics or advertising cookies and does not load third-party trackers or fonts.',
+      'Information you enter in the Request a Demo form (name, organisation, email, optional phone number, role, size, interests and optional message) is used only to respond to your request.',
+      'The Funda360 application has its own privacy controls and pages for parents and learners, separate from this website.',
+      'For privacy questions, contact the Funda360 team through the Request a Demo page.',
+    ],
   },
   terms: {
-    seo: {
-      title: 'Terms of Use',
-      description: 'Terms of use for the Funda360 website. Placeholder pending legal review.',
-    } satisfies SeoFields,
     heading: 'Terms of use',
-    placeholder: 'The final website terms of use will be supplied by the Funda360 legal owner before launch.',
+    status: 'The full terms of use for this website are being finalised with our legal advisers and will be published here.',
+    facts: [
+      'Product information on this website describes Funda360 as it is today; roadmap items are labelled as such.',
+      'Product screenshots show real Funda360 screens with a fictional demo school.',
+    ],
   },
 };

@@ -1,12 +1,7 @@
 import { siteConfig } from '@/config/site';
-import type { Feature, SeoFields } from './types';
+import type { Feature } from './types';
 
 export const aboutPage = {
-  seo: {
-    title: 'About Funda360',
-    description:
-      'Why Funda360 exists: connecting fragmented school information so school teams, leaders, families and partners can understand what is happening and act sooner.',
-  } satisfies SeoFields,
   hero: {
     eyebrow: 'About',
     heading: 'About Funda360',
@@ -47,6 +42,14 @@ export const aboutPage = {
       ],
     },
     {
+      id: 'responsible',
+      heading: 'Responsible technology',
+      body: [
+        'School information is about children and families, so Funda360 is built to protect it: each school’s data kept separate, role-based access enforced in the platform, and an audit trail for sensitive actions.',
+        'We apply the same care to intelligence. People make the decisions; the platform helps them see clearly. And we label honestly what is available today and what is still on the roadmap.',
+      ],
+    },
+    {
       id: 'vision',
       heading: 'Our vision',
       body: [
@@ -66,8 +69,7 @@ export const aboutPage = {
   },
   company: {
     heading: 'Who builds Funda360',
-    body: `Funda360 is developed by ${siteConfig.developer}.`,
-    // TODO(content): confirm company description, team and contact details for public use.
-    placeholder: 'Company background, team and contact information to be supplied.',
+    body: `Funda360 is the product; ${siteConfig.developer} is the company that designs, builds and supports it. Funda360 is designed with South African schools in mind: their terminology, their structures and their privacy obligations.`,
+    // CONFIRM: company background, team and contact details for public use (tracked in MARKETING_WEBSITE_AUDIT.md).
   },
 };

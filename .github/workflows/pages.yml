@@ -33,6 +33,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build static site
         env:
           STATIC_EXPORT: "1"
@@ -40,6 +43,11 @@ jobs:
           NEXT_PUBLIC_APP_LOGIN_URL: https://app.funda360.aurisnexus.co.za/login
           NEXT_PUBLIC_ALLOW_INDEXING: "true"
         run: npm run build
+
+      # Fails the deploy if the production build is not crawlable, mis-canonicalised,
+      # missing metadata/social images, or lists noindex pages in the sitemap.
+      - name: Verify production SEO build
+        run: node scripts/verify-seo-build.mjs out https://funda360.aurisnexus.co.za
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

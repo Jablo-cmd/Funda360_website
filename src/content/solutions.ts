@@ -1,5 +1,5 @@
 import type { ProductShotKey } from './screenshots';
-import type { Availability, Faq, Feature, SeoFields } from './types';
+import type { Availability, Faq, Feature } from './types';
 
 /**
  * Solutions by audience. Each audience gets a deliberately different page
@@ -22,7 +22,6 @@ export type SolutionPageContent = {
   summary: string;
   /** One-line positioning used on audience cards. */
   tagline: string;
-  seo: SeoFields;
   hero: { eyebrow: string; heading: string; intro: string };
   sections: SolutionSection[];
   faqs: Faq[];
@@ -30,14 +29,13 @@ export type SolutionPageContent = {
   availability: Availability;
   /** Optional real product screen for the hero. */
   heroShot?: ProductShotKey;
+  /** Why this audience cares: audience-specific value, not a feature list. */
+  why: { heading: string; points: Feature[] };
+  /** Platform capability pages this audience relies on most (in order). */
+  capabilityLinks: string[];
 };
 
 export const solutionsOverview = {
-  seo: {
-    title: 'Solutions',
-    description:
-      'Funda360 for schools, school owners and leadership, education groups and funders. See how connected school information supports each audience.',
-  } satisfies SeoFields,
   hero: {
     eyebrow: 'Solutions',
     heading: 'Built for everyone responsible for a school',
@@ -51,19 +49,23 @@ export const solutionPages: SolutionPageContent[] = [
     heroShot: 'attendance',
     tagline: 'Run your school from one connected platform.',
     navLabel: 'Schools',
+    why: {
+      heading: 'Why school teams use Funda360',
+      points: [
+        { title: 'Capture it once', description: 'Learner details, registers and marks are entered once and reused for reports, report cards and families.' },
+        { title: 'A workspace for each role', description: 'Teachers, administrators, finance and admissions staff each see the work that is theirs.' },
+        { title: 'Families kept informed', description: 'Parents see attendance, homework and published results, and can message the school.' },
+      ],
+    },
+    capabilityLinks: ['/platform/learner-management', '/platform/academics-assessments', '/platform/attendance', '/platform/finance', '/platform/communication'],
     audience: 'School teams: administrators, teachers, finance and admissions staff',
     summary: 'Run the daily work of the school in one connected platform.',
     availability: 'available',
-    seo: {
-      title: 'Funda360 for Schools',
-      description:
-        'How Funda360 supports school administrators, teachers, finance and admissions teams with connected learner, academic, attendance, fee and communication workflows.',
-    },
     hero: {
       eyebrow: 'Solutions · Schools',
       heading: 'One platform for the people who run the school day',
       intro:
-        'Administrators, teachers, finance and admissions staff each have their own work to do. Funda360 gives every role its own workspace, built on the same school records.',
+        'Administrators, teachers, finance and admissions staff each have their own work to do. Funda360 school administration software gives every role its own workspace, built on the same school records.',
     },
     sections: [
       {
@@ -120,19 +122,23 @@ export const solutionPages: SolutionPageContent[] = [
     heroShot: 'dashboard',
     tagline: 'Get visibility across your school’s operations and performance.',
     navLabel: 'School Owners & Leadership',
+    why: {
+      heading: 'Why principals and owners use Funda360',
+      points: [
+        { title: 'Current information, not compiled reports', description: 'Dashboards read from the records teams work in every day.' },
+        { title: 'One view across operations', description: 'Attendance, assessments, fees and staff in the same platform.' },
+        { title: 'Oversight with control', description: 'Approval steps for report cards, role-based access and an audit trail for sensitive actions.' },
+      ],
+    },
+    capabilityLinks: ['/platform/analytics', '/platform/attendance', '/platform/finance', '/platform/academics-assessments'],
     audience: 'Principals, deputy principals, school owners and governing leadership',
     summary: 'See what is happening across the school and where attention may be needed.',
     availability: 'available',
-    seo: {
-      title: 'Funda360 for School Owners & Leadership',
-      description:
-        'Funda360 gives principals and school owners a connected view of learners, attendance, academic performance and finances, with role-based dashboards and reports.',
-    },
     hero: {
       eyebrow: 'Solutions · School Owners & Leadership',
       heading: 'A clear view of your school, without waiting for reports',
       intro:
-        'Leadership needs to know how the school is doing: learners, attendance, results and finances. Funda360 brings this together from the work your teams already do.',
+        'Leadership needs to know how the school is doing: learners, attendance, results and finances. Funda360 brings this together on a leadership dashboard built from the work your teams already do.',
     },
     sections: [
       {
@@ -173,14 +179,18 @@ export const solutionPages: SolutionPageContent[] = [
     slug: 'education-groups',
     tagline: 'Run every school in your group on one consistent, connected platform.',
     navLabel: 'Education Groups',
+    why: {
+      heading: 'Why education groups consider Funda360',
+      points: [
+        { title: 'Consistency', description: 'Every school runs the same workflows for learners, academics, attendance and fees.' },
+        { title: 'Separation by design', description: 'Each school’s information is isolated from the others, enforced in the database.' },
+        { title: 'Repeatable onboarding', description: 'A guided setup process for each new school.' },
+      ],
+    },
+    capabilityLinks: ['/platform/learner-management', '/platform/analytics', '/platform/finance'],
     audience: 'Organisations that operate or support more than one school',
     summary: 'A consistent platform across schools, with each school’s data kept separate.',
     availability: 'available',
-    seo: {
-      title: 'Funda360 for Education Groups',
-      description:
-        'Funda360 for education groups running several schools: a consistent platform for every school, with each school’s information kept securely separate.',
-    },
     hero: {
       eyebrow: 'Solutions · Education Groups',
       heading: 'A consistent platform across every school in your group',
@@ -239,14 +249,18 @@ export const solutionPages: SolutionPageContent[] = [
     heroShot: 'analytics',
     tagline: 'Strengthen participation and performance information in the schools you support.',
     navLabel: 'Funders',
+    why: {
+      heading: 'Why school information matters to the programmes you support',
+      points: [
+        { title: 'Reliable records at the source', description: 'Attendance, assessment and enrolment information is recorded where the work happens, not reconstructed later.' },
+        { title: 'Privacy built in', description: 'Role-based access and consent records help schools protect learner information.' },
+        { title: 'Stronger schools, not only reporting', description: 'The same system helps school teams run their schools day to day.' },
+      ],
+    },
+    capabilityLinks: ['/platform/attendance', '/platform/analytics', '/platform/academics-assessments'],
     audience: 'Foundations, donors, development partners and programme funders supporting schools',
     summary: 'Help the schools you support build reliable, connected information.',
     availability: 'confirm',
-    seo: {
-      title: 'Funda360 for Funders & Education Partners',
-      description:
-        'How Funda360 can support funders and education partners who invest in schools: connected, reliable school information as a foundation for programmes.',
-    },
     hero: {
       eyebrow: 'Solutions · Funders',
       heading: 'Stronger school information for the programmes you support',

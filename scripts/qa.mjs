@@ -20,7 +20,7 @@ import AxeBuilder from '@axe-core/playwright';
 
 const PORT = 3100;
 const BASE = process.env.QA_BASE_URL || `http://localhost:${PORT}`;
-const EXPECTED_LOGIN = process.env.NEXT_PUBLIC_APP_LOGIN_URL || 'https://funda360.aurisnexus.co.za/login';
+const EXPECTED_LOGIN = process.env.NEXT_PUBLIC_APP_LOGIN_URL || 'https://app.funda360.aurisnexus.co.za/login';
 
 const REQUIRED_ROUTES = [
   '/',
@@ -48,6 +48,7 @@ const REQUIRED_ROUTES = [
   '/resources/category/teaching-learning',
   '/resources/category/ai-in-education',
   '/request-demo',
+  '/security',
   '/privacy',
   '/terms',
 ];
@@ -68,7 +69,9 @@ async function waitForServer(url, timeoutMs = 60000) {
     try {
       const res = await fetch(url);
       if (res.ok) return;
-    } catch {}
+    } catch {
+      // Server not up yet; retry.
+    }
     await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error(`Server did not start at ${url}`);
@@ -87,7 +90,9 @@ const stopServer = () => {
   if (server?.pid) {
     try {
       process.kill(-server.pid, 'SIGTERM');
-    } catch {}
+    } catch {
+      // Already stopped.
+    }
   }
 };
 
@@ -124,6 +129,9 @@ try {
         ogTitle: meta('meta[property="og:title"]'),
         ogUrl: meta('meta[property="og:url"]'),
         ogType: meta('meta[property="og:type"]'),
+        ogImage: meta('meta[property="og:image"]'),
+        twitterImage: meta('meta[name="twitter:image"]'),
+        twitterCard: meta('meta[name="twitter:card"]'),
         robots: meta('meta[name="robots"]'),
         lang: document.documentElement.lang,
         h1Count: document.querySelectorAll('h1').length,
@@ -161,13 +169,42 @@ try {
         fail(route, 'invalid JSON-LD');
       }
     }
-    if (info.jsonLd.length < 2) fail(route, 'expected Organization + WebSite JSON-LD');
+    // Entity graph: company and product are distinct, linked entities; the page entity matches the canonical.
+    const nodes = info.jsonLd.flatMap((block) => {
+      try {
+        const data = JSON.parse(block);
+        return data['@graph'] ?? [data];
+      } catch {
+        return [];
+      }
+    });
+    const org = nodes.find((n) => n['@type'] === 'Organization');
+    const app = nodes.find((n) => n['@type'] === 'SoftwareApplication');
+    if (!org || org.name !== 'Auris Nexus Technologies') fail(route, 'missing Organization (Auris Nexus Technologies)');
+    if (!app || app.name !== 'Funda360' || app.creator?.['@id'] !== org?.['@id']) fail(route, 'SoftwareApplication must be Funda360, created by the Organization');
+    const pageEntity = nodes.find((n) => ['WebPage', 'CollectionPage', 'AboutPage', 'ContactPage', 'Article'].includes(n['@type']));
+    if (!pageEntity) fail(route, 'missing page-level structured data (WebPage/CollectionPage/Article)');
+    else if (pageEntity.url !== info.canonical) fail(route, `page entity url ${pageEntity.url} ≠ canonical ${info.canonical}`);
+    const crumbs = nodes.find((n) => n['@type'] === 'BreadcrumbList');
+    if (route !== '/' && !crumbs) fail(route, 'missing BreadcrumbList');
+
+    // Titles and descriptions: written per page, sensible length, brand present once.
+    if (!info.title.includes('Funda360') || (info.title.match(/\| Funda360/g) || []).length > 1) fail(route, `title brand issue: "${info.title}"`);
+    if (info.title.length > 75) fail(route, `title too long (${info.title.length}): "${info.title}"`);
+    if (info.description && (info.description.length < 70 || info.description.length > 175)) fail(route, `description length ${info.description.length}`);
+
+    // Social cards: explicit PNG images for Open Graph and X.
+    if (!info.ogImage || !info.twitterImage || info.twitterCard !== 'summary_large_image') fail(route, 'missing og:image / twitter:image / large card');
+    else {
+      const img = await fetch(BASE + new URL(info.ogImage).pathname);
+      if (img.status !== 200 || img.headers.get('content-type') !== 'image/png') fail(route, `og:image ${info.ogImage} → ${img.status} ${img.headers.get('content-type')}`);
+    }
     for (const href of info.loginHrefs) if (href !== EXPECTED_LOGIN) fail(route, `Login links to ${href}`);
     if (info.loginHrefs.length < 2) fail(route, 'Login CTA missing from header or footer');
 
     for (const link of info.links) {
       if (!link.text) fail(route, `link without text: ${link.href}`);
-      if (/^(click here|here|read more|more)$/i.test(link.text)) fail(route, `non-descriptive link text "${link.text}"`);
+      if (/^(click here|here|read more|more|learn more|explore|link)$/i.test(link.text)) fail(route, `non-descriptive link text "${link.text}"`);
       if (link.href.startsWith('#')) fragmentLinks.add(route + link.href);
       else if (link.href.startsWith('/')) {
         const [path, hash] = link.href.split('#');
@@ -186,7 +223,7 @@ try {
     await page.close();
   }
   for (const [title, routes] of titles) if (routes.length > 1) fail('SEO', `duplicate title "${title}" on ${routes.join(', ')}`);
-  for (const [desc, routes] of descriptions) if (routes.length > 1) fail('SEO', `duplicate description on ${routes.join(', ')}`);
+  for (const [, routes] of descriptions) if (routes.length > 1) fail('SEO', `duplicate description on ${routes.join(', ')}`);
   notes.push(`Checked ${REQUIRED_ROUTES.length} routes for structure, SEO, axe and runtime errors.`);
 
   /* ------------------------------------------------------------ */
@@ -216,8 +253,18 @@ try {
   const robots = await (await fetch(`${BASE}/robots.txt`)).text();
   if (!/User-Agent/i.test(robots)) fail('SEO', 'robots.txt malformed');
   const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text();
-  for (const route of REQUIRED_ROUTES.filter((r) => !r.startsWith('/resources/') || r.includes('/category/')).filter((r) => !['/privacy', '/terms'].includes(r))) {
-    if (!sitemap.includes(`${route === '/' ? '' : route}</loc>`)) fail('SEO', `sitemap missing ${route}`);
+  const sitemapLocs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname.replace(/(.)\/$/, '$1'));
+  for (const route of REQUIRED_ROUTES.filter((r) => !r.startsWith('/resources/') && !['/privacy', '/terms'].includes(r))) {
+    if (!sitemapLocs.includes(route)) fail('SEO', `sitemap missing ${route}`);
+  }
+  for (const loc of sitemapLocs) {
+    if (['/login', '/privacy', '/terms'].includes(loc)) fail('SEO', `sitemap must not list ${loc}`);
+    const res = await fetch(BASE + loc);
+    if (res.status !== 200) fail('SEO', `sitemap URL ${loc} → HTTP ${res.status}`);
+  }
+  // Drafts and categories without a published article stay out of the sitemap.
+  for (const route of REQUIRED_ROUTES.filter((r) => r.startsWith('/resources/'))) {
+    if (sitemapLocs.includes(route)) fail('SEO', `sitemap lists unpublished ${route}`);
   }
   await context.close();
 

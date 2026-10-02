@@ -59,6 +59,7 @@ export const footerColumns: FooterColumn[] = [
     heading: 'Company',
     links: [
       { label: 'About Funda360', href: '/about' },
+      { label: 'Security & data protection', href: '/security' },
       { label: 'Resources & insights', href: '/resources' },
       { label: 'Request a demo', href: '/request-demo' },
       { label: 'Login to Funda360', href: ctas.login.href, external: true },

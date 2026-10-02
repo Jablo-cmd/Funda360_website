@@ -8,6 +8,7 @@ type Params = { params: Promise<{ article: string }> };
 export const dynamicParams = false;
 
 export function generateStaticParams() {
+  // Drafts are built but unlisted and noindex wherever draft content is hidden (see content/resources.ts).
   return articles.map((a) => ({ article: a.slug }));
 }
 
@@ -16,7 +17,8 @@ export async function generateMetadata({ params }: Params) {
   const article = getArticle(slug);
   if (!article) return {};
   return pageMetadata({
-    title: article.title,
+    title: `${article.seoTitle ?? article.title} | Funda360`,
+    socialTitle: article.title,
     description: article.description,
     path: `/resources/${article.slug}`,
     ogType: 'article',

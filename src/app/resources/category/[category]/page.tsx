@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { articlesInCategory, categories, getCategory } from '@/content/resources';
+import { articlesInCategory, categories, categoryIsIndexable, getCategory } from '@/content/resources';
 import { ArticleList } from '@/components/ui/ArticleList';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { CategoryNav } from '@/components/ui/CategoryNav';
 import { CtaBanner } from '@/components/ui/CtaBanner';
 import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
-import { pageMetadata } from '@/lib/seo';
+import { pageMetadata, webPageJsonLd } from '@/lib/seo';
+import { JsonLd } from '@/components/ui/JsonLd';
 
 type Params = { params: Promise<{ category: string }> };
 
@@ -22,9 +23,12 @@ export async function generateMetadata({ params }: Params) {
   const category = getCategory(slug);
   if (!category) return {};
   return pageMetadata({
-    title: `${category.name} insights`,
-    description: `Funda360 insights on ${category.name.toLowerCase()}: ${category.description}`,
+    title: `${category.name} Insights for Schools | Funda360`,
+    socialTitle: `${category.name} insights from Funda360`,
+    description: `Funda360 articles on ${category.name.toLowerCase()} for schools and school leaders. ${category.description}`,
     path: `/resources/category/${category.slug}`,
+    // Indexable only once the category lists a published article (avoids thin pages).
+    noIndex: !categoryIsIndexable(category.slug),
   });
 }
 
@@ -65,6 +69,16 @@ export default async function CategoryPage({ params }: Params) {
         </ul>
       </Section>
       <CtaBanner />
+      <JsonLd
+        data={webPageJsonLd({
+          path: `/resources/category/${category.slug}`,
+          title: `${category.name} Insights for Schools | Funda360`,
+          description: category.description,
+          type: 'CollectionPage',
+          hasBreadcrumb: true,
+          items: items.map((a) => ({ name: a.title, path: `/resources/${a.slug}` })),
+        })}
+      />
     </>
   );
 }

@@ -7,6 +7,8 @@ import { CtaBanner } from '@/components/ui/CtaBanner';
 import { JsonLd } from '@/components/ui/JsonLd';
 import { ArticleList } from '@/components/ui/ArticleList';
 import { LinkCardList } from '@/components/ui/LinkCardList';
+import { solutionPages } from '@/content/solutions';
+import { capabilityCard } from '@/lib/links';
 
 function initials(name: string) {
   return name
@@ -105,12 +107,25 @@ export function ArticleTemplate({ article }: { article: Article }) {
             </div>
           </section>
 
-          {article.relatedPages?.length ? (
+          {article.relatedPages?.length || article.relatedSolutions?.length ? (
             <section aria-labelledby="related-pages-heading">
               <h2 id="related-pages-heading" className="eyebrow">
                 Related on Funda360
               </h2>
-              <LinkCardList items={article.relatedPages.map((link) => ({ title: link.label, description: 'Explore this part of the platform.', href: link.href }))} />
+              <LinkCardList
+                columns={2}
+                items={[
+                  ...(article.relatedPages ?? []).map((link) => ({
+                    title: link.label,
+                    description: capabilityCard(link.href)?.description ?? 'How Funda360 approaches this, and what is available today.',
+                    href: link.href,
+                  })),
+                  ...(article.relatedSolutions ?? [])
+                    .map((slug) => solutionPages.find((s) => s.slug === slug))
+                    .filter((s) => s !== undefined)
+                    .map((s) => ({ title: `Funda360 for ${s.navLabel}`, description: s.tagline, href: `/solutions/${s.slug}` })),
+                ]}
+              />
             </section>
           ) : null}
         </footer>
@@ -138,6 +153,7 @@ export function ArticleTemplate({ article }: { article: Article }) {
           publishedAt: article.publishedAt,
           updatedAt: article.updatedAt,
           authorName: author.name,
+          section: category?.name,
         })}
       />
     </>
