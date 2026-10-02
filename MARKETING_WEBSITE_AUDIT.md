@@ -57,9 +57,9 @@ One owning page per intent. Titles are in `src/content/seo.ts`.
 | `/` | school management platform | school management software, school management system, connected school platform |
 | `/platform` | school management software platform | school ERP, school information system, all-in-one school software |
 | `/platform/learner-management` | learner management system | learner records, admissions and enrolment, learner profiles |
-| `/platform/academics` | school academic management | assessment and marks, report cards, homework |
+| `/platform/academics-assessments` | school academic management | assessment and marks, report cards, homework |
 | `/platform/attendance` | school attendance management software | attendance register, absence alerts, guardian attendance notifications |
-| `/platform/fees` | school fee management software | fee billing, payment reconciliation, fee statements |
+| `/platform/finance` | school fee management software | fee billing, payment reconciliation, fee statements |
 | `/platform/communication` | school communication platform | parent portal, school announcements, parent communication app |
 | `/platform/analytics` | school analytics and dashboards | school reporting, school performance data, leadership reports |
 | `/ai` | AI in education / school intelligence | responsible AI in schools, AI for school leaders |
@@ -87,8 +87,8 @@ Content clusters planned in `contentClusters` (`src/content/seo.ts`) and shown o
 | --- | --- | --- |
 | School management | `/platform` | connected school information, choosing school management software, moving off spreadsheets |
 | Attendance | `/platform/attendance` | using attendance patterns, following up absence, guardian notifications |
-| Academics | `/platform/academics` | assessment workflows, report cards, homework follow-through |
-| Finance | `/platform/fees` | fee statements, reconciliation, communicating about fees |
+| Academics | `/platform/academics-assessments` | assessment workflows, report cards, homework follow-through |
+| Finance | `/platform/finance` | fee statements, reconciliation, communicating about fees |
 | Communication | `/platform/communication` | parent communication, announcements, portal adoption |
 | AI and school data | `/ai` | responsible AI, data foundations, questions to ask vendors |
 
@@ -105,13 +105,13 @@ Verified against the Funda360 application (read-only; `origin/main` at `6857975`
 | Claim | Where | Evidence | Status |
 | --- | --- | --- | --- |
 | Learner records, admissions and enrolment | `/platform/learner-management`, home | Learner, admission and enrolment modules | AVAILABLE |
-| Assessments, marks and report cards (with a review workflow) | `/platform/academics` | Assessment and report-card modules and approval states | AVAILABLE |
-| Homework | `/platform/academics`, communication | Homework module and notifications | AVAILABLE |
+| Assessments, marks and report cards (with a review workflow) | `/platform/academics-assessments` | Assessment and report-card modules and approval states | AVAILABLE |
+| Homework | `/platform/academics-assessments`, communication | Homework module and notifications | AVAILABLE |
 | Attendance registers | `/platform/attendance` | Attendance capture | AVAILABLE |
 | Guardian notifications for present, absent or late | `/platform/attendance` | Attendance notification logic | AVAILABLE (wording narrowed to what the code does) |
 | Absence alerts after 3 consecutive school days | `/platform/attendance` | Consecutive-absence rule | AVAILABLE (exact rule stated) |
-| Fee billing, statements and payments | `/platform/fees` | Finance module | AVAILABLE |
-| Payment reconciliation | `/platform/fees` | Reconciliation is confirmed by a person; no automatic matching suggestions | AVAILABLE (described as human-confirmed) |
+| Fee billing, statements and payments | `/platform/finance` | Finance module | AVAILABLE |
+| Payment reconciliation | `/platform/finance` | Reconciliation is confirmed by a person; no automatic matching suggestions | AVAILABLE (described as human-confirmed) |
 | Parent portal | `/platform/communication` | Guardian portal routes | AVAILABLE |
 | Notifications for homework and attendance | `/platform/communication` | Notification triggers | AVAILABLE (narrowed from "all activity") |
 | SMS / email / WhatsApp delivery | communication | Channels depend on configured providers | CONFIRM (not claimed as available) |
@@ -233,6 +233,221 @@ change was made (out of scope for Phase 3).
 | Hosting region, sub-processors, DPA | `/security` |
 | Messaging channels (SMS, email, WhatsApp) | `/platform/communication` |
 | Group-level administration scope | `/solutions/education-groups` |
-| Payment and accounting integrations | `/platform/fees` |
+| Payment and accounting integrations | `/platform/finance` |
 | Logo file | Organization/Brand logo in JSON-LD |
 | Article publication | `/resources` |
+
+---
+
+# Phase 3.1: completion pass (2026-10-02)
+
+Scope: production verification, demo conversion, final product-truth audit,
+SEO and structured-data validation, indexing safety, Search Console
+readiness, funnel and performance checks. No redesign, no URL changes, no
+changes to the Funda360 application or any database.
+
+## 3.1.1 Production deployment verification
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Branch / HEAD before this pass | `ccr-d8e3ba6b-jy0prt` at `f7c8619`, clean tree, equal to `origin` | `git status`, `git rev-parse` |
+| Deploy of `f7c8619` | **Succeeded.** Workflow run 3 (id 37024933259): typecheck, lint, build, production SEO verification, upload and deploy all green | GitHub Actions API |
+| Deployed URL | Pages reported `https://funda360.aurisnexus.co.za/` (custom domain configured in repository Pages settings; there is no CNAME file, which the Actions deploy does not need) | `deploy-pages` log |
+| Deployed artifact | `github-pages` artifact 11234522067, sha256 `bb27a3b3…40c5`, built from `f7c8619` | Actions artifact API |
+| **Live-site checks** (HTTP status, HTTPS, live robots/sitemap/canonicals, live mobile rendering) | **Not verified from this environment.** The session's egress policy blocks `funda360.aurisnexus.co.za`, `*.github.io` and the artifact download host (proxy 403). Nothing here claims the live site was inspected | Proxy log |
+| Equivalent build checks | The deployed build passed `verify-seo-build.mjs` in CI on the exact `out/` that was uploaded. In this pass an identical production export was rebuilt locally and verified with the extended checks below | CI step 8; local run |
+
+**Do after every deploy (from a normal network):** run the post-deploy
+checklist in section 3.1.8.
+
+## 3.1.2 Demo conversion (highest priority): implemented
+
+The form previously could not send anything. It now submits to a server-side
+endpoint built for this static site.
+
+- **Architecture:**
+  - The browser form (static) POSTs JSON to `server/demo-request`, which is deployed separately. Cloudflare Workers is recommended; a Node adapter is included.
+  - The endpoint delivers to a **webhook** and/or **email via Resend**.
+  - No CRM is assumed or invented: the webhook is the clean interface for whichever CRM or form service is chosen.
+- **Security:**
+  - All credentials exist only on the endpoint.
+  - The browser holds only the endpoint's public URL and an optional public Turnstile site key.
+  - The E2E test checks the browser bundle for secret variable names.
+- **Validation:** one shared module (`src/lib/demoValidation.ts`) runs in the browser and again on the server. The server ignores unknown fields and returns field-level errors that the form shows next to each field.
+- **Spam protection:**
+  - honeypot (silent drop);
+  - minimum completion time;
+  - per-client rate limit;
+  - origin allow-list;
+  - optional Cloudflare Turnstile;
+  - 16 KB body limit;
+  - JSON-only.
+- **Duplicate prevention:**
+  - in-flight guard and disabled button;
+  - a request id kept until success;
+  - server-side de-duplication by id;
+  - `X-Request-Id` and a Resend `Idempotency-Key` downstream;
+  - the form is replaced by the confirmation after success.
+- **States:**
+  - an upfront notice when no endpoint is configured;
+  - validation summary;
+  - specific errors (too fast, rate limited, verification failed, not connected, delivery failed, network), with the person's details kept in the form;
+  - a success confirmation that is focused and scrolled into view, with next steps and a link to the platform;
+  - an optional contact-email fallback.
+- **Fields:**
+  - unchanged and minimal: name, organisation, work email, optional phone, role, size, interests, optional message, consent;
+  - each one either qualifies the demo or is needed to reply.
+- **Design:** existing form styles and tokens only.
+- **Tests:**
+  - 13 unit tests (`npm test`);
+  - a browser end-to-end test (`npm run qa:demo`) proving that a failed delivery keeps the person's details, a double-clicked retry delivers exactly once, the confirmation is focused and in view, and no secrets reach the bundle;
+  - the existing QA covers the unconfigured state.
+- **Status:**
+  - The code is ready; production is **not yet connected**.
+  - It needs the endpoint deployed and `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT` set (section 3.1.7).
+  - Until then the live form says, before anyone fills it in, that online requests are not connected and nothing is sent.
+
+## 3.1.3 Product-truth final audit
+
+Re-verified against the application repository (read-only), `main` at
+`6857975`. That commit includes the 2026-09-29 completion wave, and its
+current-state register and known-limitations documents agree with the
+findings below.
+
+| Claim area | Website wording | Evidence in the application | Status |
+| --- | --- | --- | --- |
+| School fee management | Fee structures, charges, payments, allocations, adjustments, refunds, statements, ageing, finance CSV | `src/features/fees`, current-state §2.5 | AVAILABLE |
+| Payment reconciliation | Bank-statement CSV import; a person confirms each match | "Human-confirmed bank reconciliation" | AVAILABLE |
+| Online payments | "Built to support online payment providers; availability depends on provider activation for each school" | Gateway architecture present; not live without provider credentials | CONFIRM (labelled) |
+| Accounting / payment integrations | Not claimed; "not a general-ledger accounting or payroll system" | No accounting integration | Not claimed (correct) |
+| Parent portal | Children, results, report cards, attendance, homework, documents, timetable, messaging, consent | `parentPortal`, current-state §2.9 | AVAILABLE |
+| Attendance notifications | In-app notification to guardians for present, absent or late; alert after 3 consecutive absences | Migration `20260919090001` (trigger per record); `20260829130000` (3-day alert) | AVAILABLE. **Rewritten:** the attendance meta description now says "in-app" |
+| Homework notifications | In-app notifications for homework and attendance | Homework module notifications | AVAILABLE |
+| Report cards | Grading scales, templates, governed review/approval/publication, PDFs | `reportCards`, REPORT_CARDS.md | AVAILABLE |
+| Analytics | Role-based dashboards, standard reports (learners, staff, academic, assessment, attendance), finance KPIs, CSV, attendance trend charts | `reports`, `dashboard`, `AttendanceTrendChart` | AVAILABLE |
+| Advanced BI | Roadmap | Register: "Enterprise BI is not complete". The new `/operations` panel shows raw KPI JSON, which is not a BI product | ROADMAP (labelled) |
+| AI | Every AI capability is labelled roadmap | Register roadmap item 14 | ROADMAP (labelled) |
+| Group administration | CONFIRM label | Multi-tenant model with platform-level tenant switching; group-admin scope not documented | CONFIRM (labelled) |
+| Multi-school reporting | Roadmap | No consolidated group reporting | ROADMAP (labelled) |
+| SMS / email / WhatsApp | "In-app today; email, SMS and WhatsApp depend on provider configuration" | Adapter architecture; delivery gated on provider secrets and a scheduler | CONFIRM (labelled) |
+| Two-factor authentication | "Multi-factor authentication, which some privileged roles are required to use" | `mfa`, `mfaRequiredRoles.ts` | AVAILABLE |
+| Security | Data separated per school and enforced in the database, RBAC, audit logging, record-access logging, consent records; no certification claimed; POPIA "in mind" | RLS/FORCE RLS, register §3; certification explicitly not claimed by the app | AVAILABLE; no overclaim |
+| Transport, boarding, library, sports, assets, procurement, governance, events, POPIA/DSAR workflows | Not marketed | Present on `main` as early "production foundations" (completion wave); the register still lists them as expansion areas | **Not marketed.** CONFIRM with the product owner before any page mentions them |
+| SA-SAMS / CEMIS | Not claimed | CSV staging only; "official endpoints intentionally not fabricated" | Not claimed (correct) |
+| Native mobile apps | "Native mobile apps are not currently available" | Responsive web only | Correct |
+
+No claim needed removal. One wording fix was made (attendance meta
+description). SEO targeting such as "school fee management software" is kept:
+the fee management functionality is real. Only payment-provider activation
+and integrations are unconfirmed, and the page says so.
+
+## 3.1.4 SEO architecture and content depth
+
+The live URLs differ from two labels in the Phase 3.1 brief. The existing
+URLs are kept (changing them would break indexed links for no SEO gain):
+
+| Brief label | Actual URL (unchanged) | Primary intent |
+| --- | --- | --- |
+| /platform/academics-assessments | `/platform/academics-assessments` | academic and assessment management |
+| /platform/fees | `/platform/finance` | school fee management software (title: "School Fee Management Software") |
+
+Every other route in the brief matches. Every primary landing page has:
+
+- a first-screen definition (hero, then a "What is …?" overview section);
+- an H2/H3 structure (verified: one `h1`, no skipped levels);
+- related capability and solution links;
+- a Request a Demo link (now enforced by the build verifier on every sitemap URL).
+
+Related resource links appear automatically once articles are published.
+No duplicate or synonym pages were created.
+
+## 3.1.5 Resources, authorship and structured data
+
+- **Editorial cluster:**
+  - The 8 recommended articles are defined as typed briefs in `src/content/editorial.ts`: slug, intent, required capability and solution links, outline, and claims each must not make.
+  - The briefs are shown as "In preparation" topics on `/resources`.
+  - Three existing drafts map onto briefs.
+  - Nothing is published automatically.
+- **Funnel enforcement:** the build verifier fails the deploy if any article page lacks a capability link, a solution link or the Request a Demo link.
+- **Authorship:**
+  - "The Funda360 Team" (Auris Nexus Technologies) is kept as the byline. **CONFIRM** this is the approved editorial identity.
+  - No named authors were created.
+  - Named authors need: full name, approved role or title, a short factual bio written or approved by the person, optional headshot with consent, optional verified profile URL. The `Author` type already supports name, role and bio.
+- **Structured data:** validated on all 33 HTML files (103 JSON-LD blocks). The checks:
+  - valid JSON with the schema.org context;
+  - Organization = Auris Nexus Technologies;
+  - SoftwareApplication = Funda360, created and published by that Organization;
+  - WebSite present;
+  - every `@id` reference resolves;
+  - every URL in the JSON-LD exists in the build;
+  - breadcrumb positions are sequential;
+  - every FAQ question is visible on its page;
+  - Article has headline, dates, author, publisher and image;
+  - no `aggregateRating`, `review`, `award`, `hasCredential`, employee counts or founding dates;
+  - `sameAs` only from the configured variable.
+- **Rich-result caveats:**
+  - Google shows software rich results only with price or rating data. None is invented, so that result is not expected.
+  - FAQ rich results are limited by Google to authoritative government and health sites. The markup stays valid but will rarely display.
+
+## 3.1.6 Indexing safety
+
+| Check | Result |
+| --- | --- |
+| Production requires `NEXT_PUBLIC_ALLOW_INDEXING=true` **and** a public https origin | Verified in `src/config/site.ts` |
+| Preview with flag on but http origin | `verify-seo-build.mjs --preview`: robots `Disallow: /`, all 33 HTML files noindex, a verification token supplied but not rendered |
+| Flag off with the https production origin | Same result: not indexable |
+| Production robots.txt | `Allow: /`, `Disallow: /login`, Host, Sitemap |
+| Sitemap | 18 URLs; every one matches its canonical, is indexable and exists; no indexable page is missing from it |
+| Intentional noindex | `/login`, `/privacy`, `/terms` (pending legal text), 4 draft articles, 5 empty categories, 404 |
+
+## 3.1.7 Exact production configuration still required
+
+1. **Demo endpoint (blocks conversion):**
+   1. Deploy `server/demo-request` (see its README).
+   2. Set `ALLOWED_ORIGINS=https://funda360.aurisnexus.co.za`.
+   3. Configure at least one delivery option: `DEMO_REQUEST_WEBHOOK_URL` (with `DEMO_REQUEST_WEBHOOK_SECRET`), or `RESEND_API_KEY` + `DEMO_REQUEST_EMAIL_TO` + `DEMO_REQUEST_EMAIL_FROM` on a Resend-verified domain.
+   4. Recommended: `TURNSTILE_SECRET_KEY`, plus a platform rate-limiting rule.
+2. **GitHub repository variables** (Settings > Secrets and variables > Actions > Variables), then re-run the Pages workflow:
+   - `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT` (required);
+   - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (recommended);
+   - `NEXT_PUBLIC_CONTACT_EMAIL` (CONFIRM);
+   - `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` / `NEXT_PUBLIC_BING_SITE_VERIFICATION` (only for HTML-tag verification);
+   - `NEXT_PUBLIC_DEVELOPER_URL` and `NEXT_PUBLIC_SOCIAL_PROFILES` (CONFIRM).
+3. **Legal:** final privacy policy and terms, then remove `noIndex` for `/privacy` and `/terms` in `src/content/seo.ts`. The privacy text must name the demo-request processor(s) chosen in step 1 and a retention period (CONFIRM).
+4. **Editorial:** write, review and publish the first cluster (section 3.1.5).
+
+## 3.1.8 Search Console readiness
+
+- **Canonical production URL:** `https://funda360.aurisnexus.co.za/` (every canonical URL has a trailing slash).
+- **Sitemap:** `https://funda360.aurisnexus.co.za/sitemap.xml`.
+- **Verification:** prefer a **Domain property** with a DNS TXT record on `funda360.aurisnexus.co.za` (or the parent domain). No repository change is needed for that. Alternatively, use a URL-prefix property with the HTML tag: set `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` and redeploy; the tag renders only on indexable production builds. Bing works the same way via `NEXT_PUBLIC_BING_SITE_VERIFICATION`, or import from Search Console.
+
+**Steps after each production deploy (from a normal network):**
+
+1. Open `https://funda360.aurisnexus.co.za/`. It must load over HTTPS with a valid certificate, and `http://` must redirect. (CONFIRM "Enforce HTTPS" is ticked in the repository's Pages settings; it could not be checked from here.)
+2. Open `/robots.txt` and `/sitemap.xml` and check them against section 3.1.6.
+3. View the source of `/`, `/platform/finance/` and `/request-demo/`. Check: canonical, `index, follow`, `og:image` (open the PNG URL), `twitter:card`, JSON-LD.
+4. On a phone: open the home page, the menu, `/platform/attendance/`, `/security/` and `/request-demo/`. Submit a real test demo request and confirm exactly one delivery.
+5. In Search Console:
+   1. Verify the property and submit the sitemap.
+   2. Use URL Inspection on `/`, run "Test live URL" and request indexing.
+   3. Check Pages > Indexing for unexpected exclusions after a few days.
+6. Validate a page in the Rich Results Test and the Schema Markup Validator.
+7. **Do not report the site as indexed** until Search Console shows indexed pages. As of this pass, indexing is **not verified**.
+
+## 3.1.9 Funnel and performance
+
+- **Funnel:** search → landing page (capability or solution) → related capability or solution → Request a Demo → form → endpoint → confirmation.
+  - Every sitemap URL links to `/request-demo/` (enforced by the build).
+  - All 74 primary-button instances across the built pages point to Request a Demo, except the 404 page ("Home") and `/login` ("Continue to the application"), which are utility pages.
+  - The secondary actions are Explore the Platform, Explore Solutions and Read Insights.
+  - There are no competing primary CTAs.
+- **Performance:**
+  - All 59 pages are statically generated.
+  - Client components: header, product tour, demo form, scroll-reveal observer.
+  - Modern-browser JavaScript is about 158 KB gzipped, almost all Next.js/React runtime. The 39 KB legacy polyfill is `nomodule`, so modern browsers skip it.
+  - Images: WebP screenshots of about 50 KB each, with width and height set (no layout shift).
+  - Fonts: self-hosted.
+  - Turnstile loads only when configured, and only on `/request-demo`.
+  - The build-only font packages for OG images were moved to devDependencies.
+  - Added `favicon.ico` and a 180×180 `apple-icon.png`, rendered from the existing icon.

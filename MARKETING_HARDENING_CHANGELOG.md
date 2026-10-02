@@ -57,3 +57,47 @@ or URLs changed, so no redirects were needed.
 | `src/app/globals.css` | Styles for new sections (audience line, overview, who-uses, security, captions) using existing tokens only | New content | Consistent design | Low | QA (overflow 320–1280), visual review |
 | `scripts/qa.mjs` | `/security`; entity graph checks; title/description length; OG/Twitter image checks; stricter link text; sitemap exclusions; app login URL | Guard Phase 3 rules | Prevents regressions | Low | Runs green |
 | `README.md`, `.env.example` | New env vars, scripts, SEO system | Documentation | Correct setup for the next developer | None | Review |
+
+---
+
+# Phase 3.1 changelog (completion pass)
+
+**Validation key** (in addition to Phase 3):
+
+- **Unit:** `npm test`, 13 endpoint tests.
+- **E2E:** `npm run qa:demo`, browser → site → endpoint → webhook.
+- **SEO+:** the extended `verify-seo-build.mjs`: JSON-LD graph, internal links and assets, demo CTA, article funnel, orphan indexable pages, icons.
+- **Preview:** `verify-seo-build.mjs --preview`.
+
+## Demo conversion
+
+| File | Change | Reason | Marketing / SEO benefit | Risk | Validation |
+| --- | --- | --- | --- | --- | --- |
+| `server/demo-request/handler.ts` (new) | Web-standard endpoint. Checks: origin/CORS, JSON-only, 16 KB limit, honeypot, timing, rate limit, server validation, optional Turnstile, de-duplication. Delivers via webhook (HMAC-signed) and/or Resend email; logs no personal data | The static site cannot run server code; the form could not send anything | Demo requests can reach the team: the core conversion | Needs deploying and configuring; in-memory limits are per instance (documented, plus a platform rule) | Unit (13), E2E |
+| `server/demo-request/worker.ts`, `node-server.ts`, `wrangler.toml.example`, `README.md` (new) | Cloudflare Workers entry, Node adapter, config template and deployment guide | Portable hosting with no new dependencies | Fast, low-cost path to production | None until deployed | E2E uses the Node adapter |
+| `src/lib/demoValidation.ts` (new), `src/lib/demoRequest.ts` | Validation shared by browser and server; untrusted-input normaliser; labels for delivery; client sends request id, elapsed time and Turnstile token, with a 15 s timeout, and maps server errors to clear messages | One set of rules; honest, useful errors | Fewer failed or abandoned submissions | Low | Unit, QA, E2E |
+| `src/components/forms/DemoRequestForm.tsx` | In-flight guard; request id kept until success; upfront "not connected" notice; server field errors shown on the fields; success replaces the form (next steps, Explore the platform, Send another); optional Turnstile; optional contact-email fallback | Prevent duplicates and dead ends; clear confirmation | A clear, trustworthy last step of the funnel | Low; existing styles only | QA (axe, states), E2E (in-view, focus, single delivery) |
+| `src/config/site.ts` | `turnstileSiteKey`, `contactEmail`, `searchVerification` (all public; empty by default) | Configuration without code changes | — | None | TS |
+| `src/content/legal.ts` | Privacy facts describe the encrypted submission; mention Turnstile only when enabled; contact email when configured | Privacy text must match behaviour | Trust | Final legal text still CONFIRM | QA |
+| `tsconfig.json` | `allowImportingTsExtensions` | The endpoint shares the validation module and runs under Node's type stripping | — | None (`noEmit`) | TS, build |
+| `package.json`, `.gitignore` | `test`, `qa:demo`, `demo-endpoint` scripts; Node ≥ 22.18; build-only fonts moved to devDependencies; Wrangler files ignored | Tooling | — | None | All |
+| `scripts/qa-demo-e2e.mjs` (new), `scripts/qa.mjs` | E2E demo test (failure keeps data, a double-click retry delivers once, confirmation focused and in view, no secrets in the bundle); QA checks the upfront notice and targets the result region | Guard the conversion path | Prevents silent funnel regressions | None | Runs green |
+
+## SEO, structured data and indexing
+
+| File | Change | Reason | Marketing / SEO benefit | Risk | Validation |
+| --- | --- | --- | --- | --- | --- |
+| `scripts/verify-seo-build.mjs` | Validates JSON-LD on every page (references, URLs, entity model, FAQ visibility, Article fields, forbidden rating/award/credential fields, `sameAs` only from config); Twitter and `og:url`; one `h1`; Request a Demo link on every sitemap URL; article → capability → solution → demo links; all internal links and assets resolve; indexable pages must be in the sitemap; drafts never indexable; icons; `--preview` mode | Catch SEO, schema and funnel regressions before deploy; prove the indexing gate | Protects rankings and rich-result eligibility | A failing check blocks deploy (intended) | Negative test: 5 injected faults, all caught |
+| `.github/workflows/pages.yml` | Node 22; unit-test step; public repository variables passed to the build (endpoint, Turnstile, contact, verification tokens, developer URL, profiles) and to the verifier | Node 20 deprecated on runners; configure production without code changes | Launch configuration becomes a settings change | Unset variables are empty (same as today) | Mirrors local commands |
+| `src/app/layout.tsx` | Google/Bing verification meta tags, only on indexable production builds | Search Console readiness | Faster indexing setup | None on previews (verified) | Production and preview builds |
+| `src/app/favicon.ico`, `src/app/apple-icon.png` (new) | Rendered from the existing icon | `/favicon.ico` was missing; no touch icon | Brand in search results, tabs and home screens | None | SEO+ (icons exist) |
+| `src/content/seo.ts` | Attendance description says "in-app" guardian notifications; content clusters replaced with the first editorial cluster | Truthfulness; editorial plan | Accurate snippet; topical cluster | None | QA, SEO+ |
+| `src/content/editorial.ts` (new) | Typed briefs for 8 articles: slug, intent, required capability and solution links, outline, must-not-claim rules | Publish cleanly without fabricated content | Organic acquisition pipeline | None (not rendered) | TS |
+
+## Documentation
+
+| File | Change |
+| --- | --- |
+| `MARKETING_WEBSITE_AUDIT.md` | Phase 3.1 section (deployment status, demo form, claims audit, SEO architecture, structured data, indexing safety, production configuration, Search Console, funnel, performance); corrected Phase 3 URLs (`/platform/academics-assessments`, `/platform/finance`) |
+| `README.md`, `.env.example` | Production configuration table, new variables, scripts, Search Console pointer |
+| `server/demo-request/README.md` | Endpoint architecture, configuration, deployment and testing |

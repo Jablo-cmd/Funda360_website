@@ -15,6 +15,15 @@ export const metadata: Metadata = {
   title: { default: `${siteConfig.name} | School Management Platform for Modern Schools`, template: `%s | ${siteConfig.name}` },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  // Search Console / Bing Webmaster HTML-tag verification, production only (see README).
+  ...(siteConfig.allowIndexing && (siteConfig.searchVerification.google || siteConfig.searchVerification.bing)
+    ? {
+        verification: {
+          ...(siteConfig.searchVerification.google ? { google: siteConfig.searchVerification.google } : {}),
+          ...(siteConfig.searchVerification.bing ? { other: { 'msvalidate.01': siteConfig.searchVerification.bing } } : {}),
+        },
+      }
+    : {}),
 };
 
 export const viewport: Viewport = {

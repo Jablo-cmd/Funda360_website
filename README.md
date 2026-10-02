@@ -26,7 +26,7 @@ to it. This site has no authentication.
 ## Getting started
 
 ```bash
-npm install
+npm install                  # Node 22.18+ (the demo endpoint and its tests run TypeScript natively)
 cp .env.example .env.local   # then edit values
 npm run dev                  # http://localhost:3000
 ```
@@ -40,6 +40,10 @@ npm run dev                  # http://localhost:3000
 | `npm start` | Serve the production build |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint` | ESLint (TypeScript, React hooks, jsx-a11y, Next.js rules) |
+| `npm test` | Unit tests for the Request a Demo endpoint (`server/demo-request`) |
+| `npm run qa:demo` | End-to-end demo request test: browser, site, endpoint and a local webhook (build with `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT=http://localhost:8787` first) |
+| `npm run demo-endpoint` | Run the demo endpoint locally with Node (see `server/demo-request/README.md`) |
+| `node scripts/verify-seo-build.mjs out --preview` | Assert a non-production export cannot be indexed |
 | `npm run verify:seo` | Validate a production static export in `out/`: robots, sitemap, canonicals, titles, descriptions, OG images, JSON-LD, noindex pages (run after a production `STATIC_EXPORT=1` build) |
 | `npm run qa` | Full-site QA (run after `npm run build`): every route, links, fragments, SEO metadata, JSON-LD, axe WCAG 2.1 AA, overflow at 320/390/768/1280px, navigation, keyboard, demo form, login hand-off |
 | `STATIC_EXPORT=1 npm run build` | Emit a plain static site into `out/` |
@@ -55,11 +59,39 @@ All configuration is in environment variables, read only in `src/config/site.ts`
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin (canonical URLs, Open Graph, sitemap) |
 | `NEXT_PUBLIC_APP_LOGIN_URL` | Where **Login** goes: the Funda360 application. Default `https://app.funda360.aurisnexus.co.za/login` |
-| `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT` | Request a Demo POST endpoint. Empty = not connected (form validates and says so) |
+| `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT` | Public URL of the deployed Request a Demo endpoint (`server/demo-request`). Empty = not connected: the form says so up front and validates only |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Optional Cloudflare Turnstile site key for the demo form (pair with `TURNSTILE_SECRET_KEY` on the endpoint) |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Optional public contact address shown when online submission is unavailable. CONFIRM before setting |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console HTML-tag token (production builds only) |
+| `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Bing Webmaster Tools `msvalidate.01` token (production builds only) |
 | `NEXT_PUBLIC_ALLOW_INDEXING` | `true` only on the production domain. Indexing also requires a public `https` `NEXT_PUBLIC_SITE_URL`. Otherwise robots.txt disallows all and pages are `noindex` |
 | `NEXT_PUBLIC_SHOW_DRAFT_CONTENT` | Override draft-article visibility. Default: drafts listed on non-indexed previews, hidden on the indexed site |
 | `NEXT_PUBLIC_DEVELOPER_URL` | Auris Nexus Technologies website for Organization structured data. CONFIRM: leave empty until confirmed |
 | `NEXT_PUBLIC_SOCIAL_PROFILES` | Comma-separated verified profile URLs for `sameAs`. Leave empty; never guess |
+
+## Production configuration
+
+Production builds run in `.github/workflows/pages.yml`. Public values come from
+GitHub repository **variables** (Settings > Secrets and variables > Actions >
+Variables); nothing secret is ever a `NEXT_PUBLIC_*` value.
+
+| Variable | Status |
+| --- | --- |
+| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_ALLOW_INDEXING`, `NEXT_PUBLIC_APP_LOGIN_URL` | Set in the workflow |
+| `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT` | **Required before launch.** Deploy `server/demo-request` first |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Recommended |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | CONFIRM |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` / `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Only if using HTML-tag verification (DNS verification needs neither) |
+| `NEXT_PUBLIC_DEVELOPER_URL`, `NEXT_PUBLIC_SOCIAL_PROFILES` | CONFIRM. Never guess |
+
+Endpoint secrets (delivery credentials, Turnstile secret) are set on the
+endpoint host only; see `server/demo-request/README.md`.
+
+## Search Console
+
+- Property: `https://funda360.aurisnexus.co.za/` (URL prefix). A Domain property via DNS is preferred if DNS access is available.
+- Sitemap: `https://funda360.aurisnexus.co.za/sitemap.xml`.
+- Step-by-step setup and post-deploy checks: `MARKETING_WEBSITE_AUDIT.md`, Phase 3.1, "Search Console".
 
 ## SEO system
 

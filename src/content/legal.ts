@@ -1,3 +1,5 @@
+import { siteConfig } from '@/config/site';
+
 /**
  * Legal pages. The final policy text must come from the company's legal and
  * compliance owner (see MARKETING_WEBSITE_AUDIT.md: CONFIRM). Until then these
@@ -9,9 +11,14 @@ export const legalPages = {
     status: 'The full privacy policy for this website is being finalised with our legal and compliance advisers. Until it is published, this page summarises what the website does today.',
     facts: [
       'This website does not set analytics or advertising cookies and does not load third-party trackers or fonts.',
-      'Information you enter in the Request a Demo form (name, organisation, email, optional phone number, role, size, interests and optional message) is used only to respond to your request.',
+      'Information you enter in the Request a Demo form (name, organisation, email, optional phone number, role, size, interests and optional message) is sent over an encrypted connection to the Funda360 team and used only to respond to your request.',
+      ...(siteConfig.turnstileSiteKey
+        ? ['To keep out automated spam, the Request a Demo page uses Cloudflare Turnstile, which loads a script from Cloudflare on that page only.']
+        : []),
       'The Funda360 application has its own privacy controls and pages for parents and learners, separate from this website.',
-      'For privacy questions, contact the Funda360 team through the Request a Demo page.',
+      siteConfig.contactEmail
+        ? `For privacy questions, email ${siteConfig.contactEmail}.`
+        : 'For privacy questions, contact the Funda360 team through the Request a Demo page.',
     ],
   },
   terms: {

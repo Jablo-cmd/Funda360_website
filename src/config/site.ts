@@ -56,10 +56,32 @@ export const siteConfig = {
    */
   appLoginUrl: process.env.NEXT_PUBLIC_APP_LOGIN_URL || 'https://app.funda360.aurisnexus.co.za/login',
 
-  /** Request a Demo submission endpoint. Empty = not yet connected. */
+  /**
+   * Public URL of the Request a Demo endpoint (server/demo-request, deployed
+   * separately). Empty = not yet connected. Never a secret: delivery
+   * credentials live only in the endpoint's own environment.
+   */
   demoRequestEndpoint: process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT || '',
 
+  /** Cloudflare Turnstile site key (public). Set together with TURNSTILE_SECRET_KEY on the endpoint. */
+  turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '',
+
+  /**
+   * Public contact address offered as an alternative when online submission
+   * is unavailable. CONFIRM: leave empty until an address is confirmed.
+   */
+  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',
+
   allowIndexing,
+
+  /**
+   * Search engine ownership verification tokens (public meta tag values).
+   * Only rendered on indexable production builds. DNS verification needs none.
+   */
+  searchVerification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
+    bing: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || '',
+  },
 
   /**
    * Draft articles are visible on non-indexed previews (for editorial review)

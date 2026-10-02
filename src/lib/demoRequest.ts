@@ -1,114 +1,78 @@
 import { siteConfig } from '@/config/site';
-import { interestOptions, roleOptions, sizeOptions } from '@/content/demo';
+import type { DemoRequest, DemoRequestErrors } from './demoValidation';
+
+export { emptyDemoRequest, validateDemoRequest } from './demoValidation';
+export type { DemoRequest, DemoRequestErrors, DemoRequestField } from './demoValidation';
 
 /**
- * Request a Demo: data shape, validation and the submission integration boundary.
+ * Request a Demo: browser-side submission.
  *
- * Validation is a pure function so the same rules can run in the browser now
- * and on the server later (CRM webhook, form service or Edge Function).
+ * The site is a static export, so submissions go to a separate server-side
+ * endpoint (server/demo-request, deployed on its own) whose public URL is
+ * NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT. The endpoint re-validates every field,
+ * applies spam protection and rate limits, and holds all delivery secrets.
+ * Nothing secret is ever sent to or stored in the browser.
  */
 
-export type DemoRequest = {
-  name: string;
-  organisation: string;
-  email: string;
-  phone: string;
-  role: string;
-  size: string;
-  interests: string[];
-  message: string;
-  consent: boolean;
-  /** Honeypot field: real people leave it empty. */
-  website: string;
+export type SubmitMeta = {
+  /** Stable per filled-in form; lets the endpoint ignore accidental duplicates. */
+  requestId: string;
+  /** Milliseconds between the first interaction and submit (bots submit instantly). */
+  elapsedMs: number;
+  /** Cloudflare Turnstile token, when Turnstile is enabled. */
+  turnstileToken?: string;
 };
-
-export type DemoRequestField = Exclude<keyof DemoRequest, 'website'>;
-export type DemoRequestErrors = Partial<Record<DemoRequestField, string>>;
-
-export const emptyDemoRequest: DemoRequest = {
-  name: '',
-  organisation: '',
-  email: '',
-  phone: '',
-  role: '',
-  size: '',
-  interests: [],
-  message: '',
-  consent: false,
-  website: '',
-};
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Digits with optional leading +, spaces, brackets and hyphens; 9 to 15 digits.
-const PHONE_PATTERN = /^\+?[\d\s()-]+$/;
-const MESSAGE_MAX = 2000;
-
-const validValues = (options: { value: string }[]) => new Set(options.map((o) => o.value));
-const ROLES = validValues(roleOptions);
-const SIZES = validValues(sizeOptions);
-const INTERESTS = validValues(interestOptions);
-
-export function validateDemoRequest(data: DemoRequest): DemoRequestErrors {
-  const errors: DemoRequestErrors = {};
-
-  if (!data.name.trim()) errors.name = 'Enter your name.';
-  else if (data.name.trim().length > 120) errors.name = 'Name must be 120 characters or fewer.';
-
-  if (!data.organisation.trim()) errors.organisation = 'Enter your school or organisation.';
-  else if (data.organisation.trim().length > 160) errors.organisation = 'Organisation must be 160 characters or fewer.';
-
-  if (!data.email.trim()) errors.email = 'Enter your email address.';
-  else if (!EMAIL_PATTERN.test(data.email.trim())) errors.email = 'Enter an email address in the format name@example.com.';
-
-  if (data.phone.trim()) {
-    const digits = data.phone.replace(/\D/g, '');
-    if (!PHONE_PATTERN.test(data.phone.trim()) || digits.length < 9 || digits.length > 15) {
-      errors.phone = 'Enter a valid phone number, for example 012 345 6789 or +27 12 345 6789.';
-    }
-  }
-
-  if (!ROLES.has(data.role)) errors.role = 'Select your role.';
-  if (!SIZES.has(data.size)) errors.size = 'Select the number of learners or schools.';
-
-  if (data.interests.length === 0) errors.interests = 'Select at least one area of interest.';
-  else if (data.interests.some((i) => !INTERESTS.has(i))) errors.interests = 'Select from the listed areas of interest.';
-
-  if (data.message.length > MESSAGE_MAX) errors.message = `Message must be ${MESSAGE_MAX} characters or fewer.`;
-
-  if (!data.consent) errors.consent = 'Confirm that we may contact you about your request.';
-
-  return errors;
-}
 
 export type SubmitResult =
   | { status: 'success' }
   | { status: 'not-configured' }
+  | { status: 'invalid'; errors: DemoRequestErrors }
   | { status: 'error'; message: string };
 
-/**
- * INTEGRATION BOUNDARY.
- *
- * Phase 1 has no backend. When NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT is set, the
- * request is POSTed there as JSON. Choose and implement the receiving service
- * (CRM, form service, Supabase Edge Function, etc.) in a later phase. It must
- * re-run validateDemoRequest() server-side and apply rate limiting.
- */
-export async function submitDemoRequest(data: DemoRequest): Promise<SubmitResult> {
+const TIMEOUT_MS = 15000;
+
+export async function submitDemoRequest(data: DemoRequest, meta: SubmitMeta): Promise<SubmitResult> {
   // Silently accept honeypot submissions without sending them anywhere.
   if (data.website) return { status: 'success' };
 
   if (!siteConfig.demoRequestEndpoint) return { status: 'not-configured' };
 
-  const { website: _honeypot, ...payload } = data;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const response = await fetch(siteConfig.demoRequestEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, source: 'funda360-website', submittedAt: new Date().toISOString() }),
+      body: JSON.stringify({ ...data, ...meta }),
+      signal: controller.signal,
+      credentials: 'omit',
     });
-    if (!response.ok) return { status: 'error', message: 'We could not send your request. Please try again.' };
-    return { status: 'success' };
+    const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string; fields?: DemoRequestErrors };
+    if (response.ok && body.ok) return { status: 'success' };
+
+    switch (body.error) {
+      case 'validation':
+        return body.fields && Object.keys(body.fields).length ? { status: 'invalid', errors: body.fields } : { status: 'error', message: 'Some details could not be accepted. Check the form and try again.' };
+      case 'not-configured':
+        return { status: 'not-configured' };
+      case 'too-fast':
+        return { status: 'error', message: 'Please take a moment to check your details, then send your request again.' };
+      case 'rate-limited':
+        return { status: 'error', message: 'Several requests were sent from your connection in a short time. Please wait a few minutes and try again.' };
+      case 'verification':
+        return { status: 'error', message: 'We could not confirm that this request came from a person. Complete the security check and try again.' };
+      default:
+        return { status: 'error', message: 'We could not send your request. Your details are still in the form, so please try again in a moment.' };
+    }
   } catch {
-    return { status: 'error', message: 'We could not reach the server. Check your connection and try again.' };
+    return { status: 'error', message: 'We could not reach the server. Check your connection and try again. Your details are still in the form.' };
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+/** A random request id (crypto.randomUUID where available). */
+export function newRequestId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }

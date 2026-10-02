@@ -358,6 +358,8 @@ try {
     for (const label of ['Full name (required)', 'School or organisation (required)', 'Work email address (required)', 'Phone number (optional)', 'Your role (required)', 'Number of learners or schools (required)', 'Message (optional)']) {
       if ((await page.getByLabel(label, { exact: true }).count()) !== 1) fail('form', `no control labelled "${label}"`);
     }
+    const notice = page.locator('.form-status[data-notice="endpoint"]');
+    if (!process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT && !(await notice.isVisible())) fail('form', 'no upfront notice that online submission is not connected');
     await page.getByRole('button', { name: 'Request a demo' }).click();
     const summary = page.locator('.error-summary');
     if (!(await summary.isVisible())) fail('form', 'error summary not shown on empty submit');
@@ -379,8 +381,11 @@ try {
     await page.getByLabel('Number of learners or schools (required)').selectOption('300-700');
     await page.getByLabel('Attendance').check();
     await page.getByLabel(/I agree that Funda360 may contact me/).check();
+    // The endpoint rejects forms completed faster than a person could (bot protection).
+    if (process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT) await page.waitForTimeout(3200);
     await page.getByRole('button', { name: 'Request a demo' }).click();
-    const status = page.locator('.form-status');
+    // The submission result region (the upfront notice has no role).
+    const status = page.locator('.form-status[role]');
     await status.waitFor();
     const kind = await status.getAttribute('data-status');
     const expected = process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT ? 'success' : 'not-configured';

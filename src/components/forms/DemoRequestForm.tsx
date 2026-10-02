@@ -1,12 +1,20 @@
 'use client';
 
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useRef, useState } from 'react';
+import { siteConfig } from '@/config/site';
 import { demoPage, interestOptions, roleOptions, sizeOptions } from '@/content/demo';
-import { emptyDemoRequest, submitDemoRequest, validateDemoRequest, type DemoRequest, type DemoRequestErrors, type DemoRequestField, type SubmitResult } from '@/lib/demoRequest';
+import { emptyDemoRequest, newRequestId, submitDemoRequest, validateDemoRequest, type DemoRequest, type DemoRequestErrors, type DemoRequestField } from '@/lib/demoRequest';
 
-type Status = { kind: 'idle' } | { kind: 'submitting' } | SubmitResultStatus;
-type SubmitResultStatus = { kind: SubmitResult['status']; message?: string };
+type Status = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'success' } | { kind: 'not-configured' } | { kind: 'error'; message: string };
+
+declare global {
+  interface Window {
+    turnstile?: { reset: (widget?: string | HTMLElement) => void };
+  }
+}
 
 /** Order used for the error summary (matches visual/DOM order). */
 const FIELD_ORDER: DemoRequestField[] = ['name', 'organisation', 'email', 'phone', 'role', 'size', 'interests', 'message', 'consent'];
@@ -27,6 +35,11 @@ const FIELD_TARGET: Record<DemoRequestField, string> = {
 /**
  * Request a Demo form.
  *
+ * Submission: validated here for fast feedback, then POSTed to the separate
+ * server-side endpoint (src/lib/demoRequest.ts, server/demo-request), which
+ * validates again and delivers. A request id stays the same until a request
+ * succeeds, so retries and double clicks are never delivered twice.
+ *
  * Accessibility:
  * - every control has a visible <label>; groups use <fieldset>/<legend>
  * - required fields say "(required)" in the label and carry `required`
@@ -41,8 +54,13 @@ export function DemoRequestForm() {
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const summaryRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const startedAtRef = useRef<number | null>(null);
+  const requestIdRef = useRef<string | null>(null);
+  const inFlightRef = useRef(false);
 
   function update<K extends keyof DemoRequest>(key: K, value: DemoRequest[K]) {
+    startedAtRef.current ??= Date.now();
     const next = { ...data, [key]: value };
     setData(next);
     // Once the user has tried to submit, keep errors in sync as they fix them.
@@ -53,53 +71,116 @@ export function DemoRequestForm() {
     update('interests', checked ? [...data.interests, value] : data.interests.filter((v) => v !== value));
   }
 
+  function showSummary(found: DemoRequestErrors) {
+    setErrors(found);
+    setStatus({ kind: 'idle' });
+    requestAnimationFrame(() => summaryRef.current?.focus());
+  }
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // One request at a time, whatever the button state.
+    if (inFlightRef.current) return;
     setSubmitted(true);
     const found = validateDemoRequest(data);
-    setErrors(found);
-    if (Object.keys(found).length > 0) {
-      setStatus({ kind: 'idle' });
-      requestAnimationFrame(() => summaryRef.current?.focus());
-      return;
-    }
+    if (Object.keys(found).length > 0) return showSummary(found);
+    setErrors({});
+
+    inFlightRef.current = true;
     setStatus({ kind: 'submitting' });
-    const result = await submitDemoRequest(data);
-    setStatus({ kind: result.status, message: result.status === 'error' ? result.message : undefined });
+    requestIdRef.current ??= newRequestId();
+    const token = formRef.current ? new FormData(formRef.current).get('cf-turnstile-response') : null;
+    const result = await submitDemoRequest(data, {
+      requestId: requestIdRef.current,
+      elapsedMs: startedAtRef.current ? Date.now() - startedAtRef.current : 0,
+      turnstileToken: typeof token === 'string' && token ? token : undefined,
+    });
+    inFlightRef.current = false;
+
+    if (result.status === 'invalid') {
+      window.turnstile?.reset();
+      return showSummary(result.errors);
+    }
     if (result.status === 'success') {
       setData(emptyDemoRequest);
       setSubmitted(false);
+      requestIdRef.current = null;
+      startedAtRef.current = null;
+      setStatus({ kind: 'success' });
+    } else {
+      // Turnstile tokens are single-use; get a fresh one for the retry.
+      window.turnstile?.reset();
+      setStatus(result.status === 'error' ? { kind: 'error', message: result.message } : { kind: 'not-configured' });
     }
     requestAnimationFrame(() => statusRef.current?.focus());
+  }
+
+  function startAnother() {
+    setStatus({ kind: 'idle' });
+    requestAnimationFrame(() => document.getElementById('demo-name')?.focus());
   }
 
   const describedBy = (field: DemoRequestField, hint = false) => [hint ? `demo-${field}-hint` : null, errors[field] ? `demo-${field}-error` : null].filter(Boolean).join(' ') || undefined;
 
   const errorEntries = FIELD_ORDER.filter((f) => errors[f]).map((f) => [f, errors[f] as string] as const);
 
+  const contactLine = siteConfig.contactEmail ? (
+    <p>
+      You can also email us at <a href={`mailto:${siteConfig.contactEmail}?subject=Funda360%20demo%20request`}>{siteConfig.contactEmail}</a>.
+    </p>
+  ) : null;
+
+  // After success the form is replaced by the confirmation, so it cannot be sent twice by accident.
+  if (status.kind === 'success') {
+    return (
+      <div ref={statusRef} tabIndex={-1} className="form-status form-status--success" role="status" data-status="success">
+        <h2>Thank you. Your demo request has been sent</h2>
+        <p>We have your details. Here is what happens next:</p>
+        <ol className="bullets">
+          {demoPage.expectations.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+        <p>While you wait, you can explore the platform in more detail.</p>
+        <div className="cta-group">
+          <Link href="/platform" className="cta cta--secondary">
+            Explore the Funda360 platform
+            <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+          <button type="button" className="cta cta--text" onClick={startAnother}>
+            Send another request
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      {status.kind === 'success' || status.kind === 'not-configured' || status.kind === 'error' ? (
+      {!siteConfig.demoRequestEndpoint && status.kind === 'idle' ? (
+        <div className="form-status" data-status="not-configured" data-notice="endpoint">
+          <h2>Online demo requests are not connected yet</h2>
+          <p>You can check your details with this form, but it cannot send them yet. Nothing you enter is stored or sent.</p>
+          {contactLine}
+        </div>
+      ) : null}
+
+      {status.kind === 'not-configured' || status.kind === 'error' ? (
         <div ref={statusRef} tabIndex={-1} className="form-status" role={status.kind === 'error' ? 'alert' : 'status'} data-status={status.kind}>
-          {status.kind === 'success' ? (
-            <>
-              <h2>Thank you, your request has been sent</h2>
-              <p>The Funda360 team will contact you to arrange your demo.</p>
-            </>
-          ) : null}
           {status.kind === 'not-configured' ? (
             <>
-              <h2>Your details are valid, but online submission is not connected yet</h2>
-              {/* PHASE 1 INTEGRATION BOUNDARY: set NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT (see src/lib/demoRequest.ts). */}
-              <p>This website is in preview and demo requests cannot be sent from this form yet. Your information has not been stored or sent anywhere.</p>
+              <h2>Your details are valid, but online requests are not connected yet</h2>
+              {/* Set NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT to the deployed server/demo-request endpoint. */}
+              <p>Your request could not be sent from this form. Your information has not been stored or sent anywhere.</p>
+              {contactLine}
             </>
-          ) : null}
-          {status.kind === 'error' ? (
+          ) : (
             <>
               <h2>Your request was not sent</h2>
               <p>{status.message}</p>
+              {contactLine}
             </>
-          ) : null}
+          )}
         </div>
       ) : null}
 
@@ -116,7 +197,7 @@ export function DemoRequestForm() {
         </div>
       ) : null}
 
-      <form className="form" noValidate onSubmit={onSubmit} aria-describedby="demo-form-required-note" data-form="demo-request">
+      <form ref={formRef} className="form" noValidate onSubmit={onSubmit} aria-describedby="demo-form-required-note" data-form="demo-request">
         <p id="demo-form-required-note" className="hint">
           Fields marked (required) must be completed.
         </p>
@@ -272,10 +353,21 @@ export function DemoRequestForm() {
           <input id="demo-website" type="text" name="website" tabIndex={-1} autoComplete="off" value={data.website} onChange={(e) => update('website', e.target.value)} />
         </div>
 
+        {siteConfig.turnstileSiteKey ? (
+          <div className="field">
+            {/* Cloudflare Turnstile spam check; loaded only when configured. */}
+            <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
+            <div className="cf-turnstile" data-sitekey={siteConfig.turnstileSiteKey} data-theme="light" data-size="flexible" />
+          </div>
+        ) : null}
+
         <div className="form__submit">
           <button type="submit" className="cta cta--primary" disabled={status.kind === 'submitting'} aria-disabled={status.kind === 'submitting'}>
             {status.kind === 'submitting' ? 'Sending request…' : 'Request a demo'}
           </button>
+          <p className="hint" aria-live="polite">
+            {status.kind === 'submitting' ? 'Sending your request. Please keep this page open.' : null}
+          </p>
         </div>
       </form>
     </>

@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -36,17 +36,31 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Unit tests (demo request endpoint)
+        run: npm test
+
       - name: Build static site
         env:
           STATIC_EXPORT: "1"
           NEXT_PUBLIC_SITE_URL: https://funda360.aurisnexus.co.za
           NEXT_PUBLIC_APP_LOGIN_URL: https://app.funda360.aurisnexus.co.za/login
           NEXT_PUBLIC_ALLOW_INDEXING: "true"
+          # Optional, public (non-secret) values from Settings > Secrets and variables > Actions > Variables.
+          # Empty until configured; see README "Production configuration".
+          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT }}
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+          NEXT_PUBLIC_CONTACT_EMAIL: ${{ vars.NEXT_PUBLIC_CONTACT_EMAIL }}
+          NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ vars.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+          NEXT_PUBLIC_BING_SITE_VERIFICATION: ${{ vars.NEXT_PUBLIC_BING_SITE_VERIFICATION }}
+          NEXT_PUBLIC_DEVELOPER_URL: ${{ vars.NEXT_PUBLIC_DEVELOPER_URL }}
+          NEXT_PUBLIC_SOCIAL_PROFILES: ${{ vars.NEXT_PUBLIC_SOCIAL_PROFILES }}
         run: npm run build
 
       # Fails the deploy if the production build is not crawlable, mis-canonicalised,
       # missing metadata/social images, or lists noindex pages in the sitemap.
       - name: Verify production SEO build
+        env:
+          NEXT_PUBLIC_SOCIAL_PROFILES: ${{ vars.NEXT_PUBLIC_SOCIAL_PROFILES }}
         run: node scripts/verify-seo-build.mjs out https://funda360.aurisnexus.co.za
 
       - name: Configure GitHub Pages

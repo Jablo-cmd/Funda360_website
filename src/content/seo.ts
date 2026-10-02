@@ -73,7 +73,7 @@ export const routeSeo = {
     path: '/platform/attendance',
     title: 'School Attendance Management Software | Funda360',
     description:
-      'Digital class registers, attendance trends and reports, and automatic guardian notifications. Funda360 attendance management helps schools notice patterns early.',
+      'Digital class registers, attendance trends and reports, and automatic in-app guardian notifications. Funda360 attendance management helps schools notice patterns early.',
     socialTitle: 'School attendance management, connected to every learner',
     primaryIntent: 'school attendance management',
     secondaryIntents: ['attendance management system', 'digital attendance register', 'school attendance software South Africa', 'attendance tracking'],
@@ -245,39 +245,35 @@ export function seoFor(path: SeoPath): RouteSeo {
 }
 
 /**
- * Content plan: topic clusters for future articles. These are briefs, not
- * pages. Each topic names the page it should support with internal links.
- * Write, review and publish them through src/content/resources.ts.
+ * Content plan: the first editorial cluster, shown on /resources while no
+ * article is published. Briefs (target intent, required links, what must not
+ * be claimed) are in src/content/editorial.ts. Write, review and publish the
+ * articles through src/content/resources.ts.
  */
 export const contentClusters = [
   {
     cluster: 'School management',
     supports: '/platform',
-    topics: ['What is a school management system?', 'School management software explained', 'Moving from spreadsheets to school management software'],
+    topics: ['What is a school management system?', 'What should school management software include?'],
   },
   {
     cluster: 'Attendance',
     supports: '/platform/attendance',
-    topics: ['School attendance management: a practical guide', 'Digital attendance registers', 'Improving attendance visibility for leadership'],
-  },
-  {
-    cluster: 'Academics',
-    supports: '/platform/academics-assessments',
-    topics: ['Assessment management for schools', 'What an academic management system does', 'Digital report cards: review, approval and publication'],
+    topics: ['Digital school attendance management', 'Improving attendance tracking in schools'],
   },
   {
     cluster: 'Finance',
     supports: '/platform/finance',
-    topics: ['School fee management basics', 'School finance administration', 'Digitising school fee processes'],
+    topics: ['School fee management software explained'],
   },
   {
-    cluster: 'Communication',
-    supports: '/platform/communication',
-    topics: ['What a parent portal should offer', 'School communication that reaches the right people', 'Parent-school communication'],
+    cluster: 'Academics',
+    supports: '/platform/academics-assessments',
+    topics: ['Digital academic and assessment management'],
   },
   {
-    cluster: 'AI and school data',
+    cluster: 'AI in education',
     supports: '/ai',
-    topics: ['AI in education: a practical view', 'Responsible AI in schools', 'AI and learner data: questions to ask', 'School data intelligence'],
+    topics: ['Practical uses of AI in school management', 'Responsible AI in education'],
   },
 ] as const;
