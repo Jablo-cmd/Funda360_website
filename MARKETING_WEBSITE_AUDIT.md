@@ -555,3 +555,49 @@ emulator (301 for slash-less URLs, `404.html`). Both passed.
 | "Enforce HTTPS" in the repository's Pages settings | GitHub > Settings > Pages | Checked by `verify-live` (`http://` must 301 to `https://`) |
 | Final privacy policy and terms; then remove `noIndex` for `/privacy`, `/terms` | Legal | Pending |
 | `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_DEVELOPER_URL`, `NEXT_PUBLIC_SOCIAL_PROFILES` | Repository variables | CONFIRM; leave empty until confirmed |
+
+## L.6 First live verification result (workflow run 5, commit `dabb1cb`, 2026-10-06)
+
+All jobs passed:
+
+| Job | Result |
+| --- | --- |
+| build | Typecheck, lint, unit tests, build, production SEO verification |
+| deploy | Pages deployment |
+| verify-live | Pass |
+
+What `verify-live` confirmed **on the live site**:
+
+- **Commit and HTTPS:**
+  - the live site served commit `dabb1cb`;
+  - `http://` returned 301 to `https://funda360.aurisnexus.co.za/`.
+- **robots.txt:** production version.
+- **sitemap.xml:** 18 URLs, all on the production host, no duplicates.
+- **All 18 sitemap URLs:**
+  - HTTP 200;
+  - canonical equal to the URL, `index, follow`;
+  - title, description, `og:url`, Twitter card;
+  - `og:image` returned as `image/png`;
+  - valid JSON-LD;
+  - no localhost or preview hosts;
+  - unique titles and descriptions;
+  - the slash-less variant 301s to the canonical URL.
+- **Links and assets:** 47 distinct internal links and assets all returned 200.
+- **Noindex pages:** `/login/`, `/privacy/`, `/terms/`, `/demo/`, `/product/`, `/features/` and a draft article returned 200, were noindex, and were absent from the sitemap.
+- **404:** an unknown URL returned HTTP 404 with the "Page not found" page.
+- **Icons:** all served.
+- **Demo form:** reported **not connected** (warning; the form tells visitors).
+
+Browser QA against production (`qa.mjs`, Chromium) passed:
+
+- 28 routes for structure, SEO, axe WCAG 2.1 AA and runtime errors;
+- crawl of 25 internal URLs and 33 fragment links;
+- 28 routes at 320/375/390/414/768/1280 px for overflow, edge, touch-target, clipped-text, small-text and image checks;
+- mobile and desktop navigation, keyboard, demo form (unconfigured state), login hand-off and alias forwarding;
+- 13 product images loading with alt text.
+
+Dependency audit:
+
+- `npm audit --omit=dev`: **0 vulnerabilities** (nothing shipped to the site is affected).
+- `npm audit`: 4 "high" findings, all one development-only chain (`@next/eslint-plugin-next` → `fast-glob` → `micromatch` → `braces`). It affects only lint runs on trusted repository files.
+- No patched `braces` exists. The suggested `--force` fix would downgrade the Next.js lint plugin to v14 (breaking), so it was not applied. Re-check when the plugin updates `fast-glob`.
