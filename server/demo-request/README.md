@@ -75,7 +75,7 @@ Webhook payload:
 
 The endpoint also exposes `GET /healthz` as a non-sensitive deployment/readiness probe. It returns `{ "ok": true, "service": "funda360-demo-request" }` and never exposes delivery credentials.
 
-The repository includes `.github/workflows/demo-request.yml`, a manual Cloudflare deployment workflow. Configure the GitHub repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, then run **Deploy Funda360 Demo Request Worker** from Actions. Delivery credentials remain on the Worker; Cloudflare recommends storing API keys and tokens as Worker secrets rather than plaintext variables. citeturn0search0turn0search1
+The repository includes `.github/workflows/demo-request.yml`, a manual Cloudflare deployment workflow. Configure the GitHub repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, then run **Deploy Funda360 Demo Request Worker** from Actions. Delivery credentials remain on the Worker; Cloudflare recommends storing API keys and tokens as Worker secrets rather than plaintext variables.
 
 
 ```bash
