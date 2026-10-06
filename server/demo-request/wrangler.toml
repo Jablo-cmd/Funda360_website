@@ -1,0 +1,20 @@
+# Copy to wrangler.toml (not committed) and deploy with:  npx wrangler deploy
+# Secrets are NEVER written here. Set them with:  npx wrangler secret put <NAME>
+name = "funda360-demo-request"
+main = "worker.ts"
+compatibility_date = "2026-10-01"
+
+# Public, non-secret settings.
+[vars]
+ALLOWED_ORIGINS = "https://funda360.aurisnexus.co.za"
+# DEMO_REQUEST_EMAIL_TO = "CONFIRM: inbox that receives demo requests"
+# DEMO_REQUEST_EMAIL_FROM = "Funda360 Website <CONFIRM: address on a domain verified with Resend>"
+
+# Secrets (wrangler secret put):
+#   RESEND_API_KEY               email delivery through Resend (optional)
+#   DEMO_REQUEST_WEBHOOK_URL     webhook delivery to a CRM or form service (optional)
+#   DEMO_REQUEST_WEBHOOK_SECRET  HMAC signing secret for the webhook (optional)
+#   TURNSTILE_SECRET_KEY         Cloudflare Turnstile verification (optional, recommended)
+#
+# Recommended: add a Cloudflare rate-limiting rule for this route as well
+# (the in-code limit is per instance only).
