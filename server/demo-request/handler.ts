@@ -94,7 +94,16 @@ async function handle(request: Request, env: DemoEndpointEnv, deps: Partial<Deps
     if (!originAllowed) return new Response(null, { status: 403, headers: cors });
     return new Response(null, { status: 204, headers: { ...cors, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '86400' } });
   }
-  if (request.method !== 'POST') return fail(405, 'bad-request', {}, { Allow: 'POST, OPTIONS' });
+
+  // Lightweight deployment/readiness probe. It reveals no secrets or configuration.
+  if (request.method === 'GET' && new URL(request.url).pathname === '/healthz') {
+    return new Response(JSON.stringify({ ok: true, service: 'funda360-demo-request' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...cors },
+    });
+  }
+
+  if (request.method !== 'POST') return fail(405, 'bad-request', {}, { Allow: 'GET, POST, OPTIONS' });
 
   // Browsers always send Origin on cross-origin POSTs; anything else is not our form.
   if (!originAllowed) return fail(403, 'forbidden');
