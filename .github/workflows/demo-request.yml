@@ -28,7 +28,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: server/demo-request
-          command: deploy --config wrangler.toml.example
+          command: deploy
 
       - name: Deployment configuration reminder
         run: |
