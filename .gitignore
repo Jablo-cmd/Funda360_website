@@ -10,5 +10,6 @@ qa-report/
 
 # Demo request endpoint: local Wrangler config and secrets are never committed
 server/demo-request/wrangler.toml
+!server/demo-request/wrangler.toml
 server/demo-request/.dev.vars
 .wrangler/
