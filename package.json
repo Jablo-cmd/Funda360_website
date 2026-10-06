@@ -11,7 +11,7 @@
     "qa": "node scripts/qa.mjs",
     "lint": "eslint .",
     "verify:seo": "node scripts/verify-seo-build.mjs",
-    "test": "node --test server/demo-request/handler.test.ts",
+    "test": "node --test server/demo-request/handler.test.ts server/demo-request/node-server.test.ts",
     "qa:demo": "node scripts/qa-demo-e2e.mjs",
     "demo-endpoint": "node server/demo-request/node-server.ts"
   },

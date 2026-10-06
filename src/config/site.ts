@@ -10,6 +10,14 @@ function stripTrailingSlash(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value;
 }
 
+/**
+ * Personal data is only ever posted over HTTPS (plain http is allowed for
+ * localhost testing). Anything else is treated as not configured.
+ */
+function secureEndpoint(value: string): string {
+  return /^https:\/\/[^/\s]+/.test(value) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(value) ? value : '';
+}
+
 const url = stripTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
 
 /** A real, public origin: https and not a local address. */
@@ -61,7 +69,7 @@ export const siteConfig = {
    * separately). Empty = not yet connected. Never a secret: delivery
    * credentials live only in the endpoint's own environment.
    */
-  demoRequestEndpoint: process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT || '',
+  demoRequestEndpoint: secureEndpoint(process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT || ''),
 
   /** Cloudflare Turnstile site key (public). Set together with TURNSTILE_SECRET_KEY on the endpoint. */
   turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '',

@@ -16,8 +16,8 @@ Browser form (static site) --HTTPS POST JSON--> endpoint --> webhook and/or emai
 | --- | --- |
 | `handler.ts` | The endpoint: a Web-standard `Request -> Response` handler with no dependencies |
 | `worker.ts` | Cloudflare Workers entry point (recommended host) |
-| `node-server.ts` | Node adapter for self-hosting or local testing (Node 22.18+) |
-| `handler.test.ts` | Unit tests (`npm test`) |
+| `node-server.ts` | Node adapter for self-hosting or local testing (Node 22.18+). Rate limits by the TCP address; client-sent `CF-Connecting-IP` / `X-Forwarded-For` are ignored unless `TRUST_PROXY=1` (exactly one trusted reverse proxy) |
+| `handler.test.ts`, `node-server.test.ts` | Unit tests and a Node-adapter spoofing test (`npm test`) |
 | `wrangler.toml.example` | Cloudflare configuration template (copy to `wrangler.toml`, which is git-ignored) |
 
 Validation rules are shared with the browser form (`src/lib/demoValidation.ts`),
@@ -32,11 +32,11 @@ so the server never accepts something the form would reject.
 5. **Rate limit:** 5 requests per client address per 10 minutes. This is per instance, so also add a platform rate-limiting rule.
 6. **Server-side validation:** the same rules as the form. Field errors are returned and shown next to the fields.
 7. **Optional Cloudflare Turnstile:** required when `TURNSTILE_SECRET_KEY` is set.
-8. **Duplicate protection:** each filled-in form has a request id. The endpoint does not deliver the same id twice. The id is also sent downstream (`X-Request-Id` header, and a Resend `Idempotency-Key`), so receivers can de-duplicate across instances.
+8. **Duplicate protection:** each filled-in form has a request id. The endpoint claims the id before delivering (a concurrent copy gets `409 in-progress`) and never delivers the same id twice. The id is also sent downstream (`X-Request-Id` header, and a Resend `Idempotency-Key`), so receivers can de-duplicate across instances.
 9. **Delivery:** to a webhook, by email through Resend, or both. Success is reported only if at least one destination accepted the request. Otherwise the person sees an error and their details stay in the form.
 10. **Logging:** only operational events (delivered, rejected and the reason, provider status codes). No personal data is logged.
 
-Responses are `{ "ok": true }`, or `{ "ok": false, "error": "<code>" }` with one of these codes: `validation` (with `fields`), `too-fast`, `rate-limited`, `verification`, `not-configured`, `delivery`, `forbidden`, `bad-request`.
+Responses are `{ "ok": true }`, or `{ "ok": false, "error": "<code>" }` with one of these codes: `validation` (with `fields`), `too-fast`, `in-progress`, `rate-limited`, `verification`, `not-configured`, `delivery`, `forbidden`, `bad-request`.
 
 ## Configuration
 

@@ -43,6 +43,8 @@ npm run dev                  # http://localhost:3000
 | `npm test` | Unit tests for the Request a Demo endpoint (`server/demo-request`) |
 | `npm run qa:demo` | End-to-end demo request test: browser, site, endpoint and a local webhook (build with `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT=http://localhost:8787` first) |
 | `npm run demo-endpoint` | Run the demo endpoint locally with Node (see `server/demo-request/README.md`) |
+| `node scripts/verify-live.mjs https://funda360.aurisnexus.co.za [commit]` | Live production verification. Runs in CI after every deploy: HTTPS redirect, robots, sitemap, every sitemap URL, slash redirects, links and assets, noindex pages, 404, icons, demo endpoint. `VERIFY_FETCH_BASE=http://localhost:4400` dry-runs it against a local copy of `out/` |
+| `QA_BASE_URL=https://funda360.aurisnexus.co.za npm run qa` | Full browser QA against any running site (CI runs it against production after deploy) |
 | `node scripts/verify-seo-build.mjs out --preview` | Assert a non-production export cannot be indexed |
 | `npm run verify:seo` | Validate a production static export in `out/`: robots, sitemap, canonicals, titles, descriptions, OG images, JSON-LD, noindex pages (run after a production `STATIC_EXPORT=1` build) |
 | `npm run qa` | Full-site QA (run after `npm run build`): every route, links, fragments, SEO metadata, JSON-LD, axe WCAG 2.1 AA, overflow at 320/390/768/1280px, navigation, keyboard, demo form, login hand-off |
@@ -86,6 +88,13 @@ Variables); nothing secret is ever a `NEXT_PUBLIC_*` value.
 
 Endpoint secrets (delivery credentials, Turnstile secret) are set on the
 endpoint host only; see `server/demo-request/README.md`.
+
+## Short alias URLs
+
+`/demo`, `/product` and `/features` are small noindex pages that forward
+immediately (zero-delay meta refresh, canonical pointing to the real page) to
+`/request-demo` and `/platform`. GitHub Pages cannot send HTTP redirects.
+They are never listed in the sitemap. See `src/components/ui/ForwardPage.tsx`.
 
 ## Search Console
 

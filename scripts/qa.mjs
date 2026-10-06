@@ -54,7 +54,9 @@ const REQUIRED_ROUTES = [
 ];
 const VIEWPORTS = [
   { name: 'mobile-320', width: 320, height: 640 },
+  { name: 'mobile-375', width: 375, height: 667 },
   { name: 'mobile-390', width: 390, height: 844 },
+  { name: 'mobile-414', width: 414, height: 896 },
   { name: 'tablet-768', width: 768, height: 1024 },
   { name: 'desktop-1280', width: 1280, height: 800 },
 ];
@@ -156,7 +158,8 @@ try {
     }
     if (!info.title) fail(route, 'missing <title>');
     if (!info.description) fail(route, 'missing meta description');
-    if (!info.canonical || !info.canonical.endsWith(route === '/' ? '' : route)) fail(route, `bad canonical ${info.canonical}`);
+    // next start canonicals have no trailing slash; the static export's do (/platform/).
+    if (!info.canonical || !(info.canonical.endsWith(route === '/' ? '' : route) || info.canonical.endsWith(`${route}/`))) fail(route, `bad canonical ${info.canonical}`);
     if (!info.ogTitle || !info.ogUrl || !info.ogType) fail(route, 'missing Open Graph fields');
     if (info.lang !== 'en-ZA') fail(route, `html lang is "${info.lang}"`);
     if (!info.hasMain || !info.hasSkipLink) fail(route, 'missing main landmark or skip link');
@@ -278,6 +281,52 @@ try {
       await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       if (overflow > 0) fail(`${vp.name} ${route}`, `horizontal overflow of ${overflow}px`);
+      // Layout defects that do not show up as page overflow.
+      const problems = await page.evaluate(() => {
+        const out = [];
+        const W = window.innerWidth;
+        const visible = (el) => {
+          const r = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && !el.closest('[aria-hidden="true"], .visually-hidden, .honeypot, #site-nav:not([data-open="true"])');
+        };
+        const label = (el) => `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : ''} "${(el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 40)}"`;
+        // Buttons and CTAs must not touch the screen edges.
+        const inScroller = (el) => {
+          for (let p = el.parentElement; p; p = p.parentElement) if (['auto', 'scroll'].includes(getComputedStyle(p).overflowX)) return true;
+          return false;
+        };
+        for (const el of document.querySelectorAll('main .cta, main button')) {
+          if (!visible(el) || inScroller(el)) continue; // items in a horizontal scroll strip are meant to run off-screen
+          const r = el.getBoundingClientRect();
+          if (r.left < 8 || r.right > W - 8) out.push(`touches the screen edge: ${label(el)}`);
+        }
+        // Touch targets: at least 24x24 CSS px (WCAG 2.2 target size), inline text links excepted.
+        for (const el of document.querySelectorAll('a, button, input, select, textarea, summary')) {
+          if (!visible(el)) continue;
+          const cs = getComputedStyle(el);
+          if (el.tagName === 'A' && cs.display === 'inline') continue;
+          if (el.type === 'checkbox' || el.type === 'radio') continue; // labelled controls; the label is the target
+          if (getComputedStyle(el, '::after').position === 'absolute') continue; // stretched link: the whole card is the target
+          const r = el.getBoundingClientRect();
+          if (r.width < 24 || r.height < 24) out.push(`small target ${Math.round(r.width)}x${Math.round(r.height)}: ${label(el)}`);
+        }
+        // Clipped text: content wider than its box inside a clipping container.
+        for (const el of document.querySelectorAll('main h1, main h2, main h3, main p, main li, main a, main span, main dd, main dt, main td, main th')) {
+          if (!visible(el)) continue;
+          const cs = getComputedStyle(el);
+          if (['hidden', 'clip'].includes(cs.overflowX) && cs.textOverflow !== 'ellipsis' && el.scrollWidth > el.clientWidth + 1) out.push(`clipped text: ${label(el)}`);
+          if (parseFloat(cs.fontSize) < 12 && el.textContent.trim()) out.push(`text below 12px (${cs.fontSize}): ${label(el)}`);
+        }
+        // Images must stay inside the viewport.
+        for (const img of document.querySelectorAll('main img')) {
+          if (!visible(img)) continue;
+          const r = img.getBoundingClientRect();
+          if (r.right > W + 1 || r.left < -1) out.push(`image outside viewport: ${img.getAttribute('src')}`);
+        }
+        return [...new Set(out)].slice(0, 15);
+      });
+      for (const problem of problems) fail(`${vp.name} ${route}`, problem);
     }
     // Mobile nav must be collapsed and operable below the breakpoint.
     await page.goto(BASE + '/', { waitUntil: 'networkidle' });
@@ -291,7 +340,7 @@ try {
       if (!(await page.locator('#site-nav').isVisible())) fail(vp.name, 'nav not shown after opening menu');
       await page.locator('#nav-button-platform').click();
       await page.locator('#nav-submenu-platform a', { hasText: 'Attendance' }).click();
-      await page.waitForURL('**/platform/attendance');
+      await page.waitForURL(/\/platform\/attendance\/?$/);
       await page.locator('header[data-hydrated]').waitFor();
       try {
         await page.locator('#site-nav').waitFor({ state: 'hidden', timeout: 2000 });
@@ -325,8 +374,9 @@ try {
       ['Request a Demo', '/request-demo'],
     ]) {
       await page.locator('#site-nav').getByRole('link', { name: label, exact: true }).click();
-      await page.waitForURL(`**${path}`);
-      const current = await page.locator(`#site-nav a[href="${path}"]`).first().getAttribute('aria-current');
+      await page.waitForURL(new RegExp(`${path.replace(/[/-]/g, '\\$&')}/?$`));
+      // Static export links carry a trailing slash (/ai/); next start does not (/ai).
+      const current = await page.locator(`#site-nav a[href="${path}"], #site-nav a[href="${path}/"]`).first().getAttribute('aria-current');
       if (current !== 'page') fail('nav', `${label} not marked aria-current on ${path}`);
     }
     for (const id of ['platform', 'solutions']) {
@@ -403,6 +453,13 @@ try {
     const html = await (await fetch(`${BASE}/login`)).text();
     if (!html.includes(`http-equiv="refresh" content="0;url=${EXPECTED_LOGIN}"`)) fail('login', '/login does not forward to the application');
     if (!html.includes('noindex')) fail('login', '/login should be noindex');
+    // Short alias URLs forward to the real pages and stay out of search.
+    for (const [alias, target] of [['/demo', '/request-demo'], ['/product', '/platform'], ['/features', '/platform']]) {
+      const page = await (await fetch(`${BASE}${alias}`)).text();
+      if (!new RegExp(`http-equiv="refresh" content="0;url=${target}/?"`).test(page)) fail(alias, `does not forward to ${target}`);
+      if (!page.includes('noindex')) fail(alias, 'should be noindex');
+      if (!new RegExp(`<link rel="canonical" href="[^"]*${target}/?"`).test(page)) fail(alias, `canonical should be ${target}`);
+    }
   }
 
   /* ------------------------------------------------------------ */

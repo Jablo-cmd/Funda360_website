@@ -37,7 +37,8 @@ export const emptyDemoRequest: DemoRequest = {
 };
 
 export const MESSAGE_MAX = 2000;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// One address only: no spaces, separators or display-name characters.
+const EMAIL_PATTERN = /^[^\s@,;:<>()[\]"'\\]+@[^\s@,;:<>()[\]"'\\]+\.[^\s@,;:<>()[\]"'\\]+$/;
 // Digits with optional leading +, spaces, brackets and hyphens; 9 to 15 digits.
 const PHONE_PATTERN = /^\+?[\d\s()-]+$/;
 

@@ -101,3 +101,26 @@ or URLs changed, so no redirects were needed.
 | `MARKETING_WEBSITE_AUDIT.md` | Phase 3.1 section (deployment status, demo form, claims audit, SEO architecture, structured data, indexing safety, production configuration, Search Console, funnel, performance); corrected Phase 3 URLs (`/platform/academics-assessments`, `/platform/finance`) |
 | `README.md`, `.env.example` | Production configuration table, new variables, scripts, Search Console pointer |
 | `server/demo-request/README.md` | Endpoint architecture, configuration, deployment and testing |
+
+---
+
+# Launch hardening changelog (2026-10-06)
+
+| File | Change | Reason | Validation |
+| --- | --- | --- | --- |
+| `src/components/layout/SiteHeader.tsx` | Compare the pathname without its trailing slash | `aria-current` and the active nav state were missing on the static export (production) | QA against the Pages emulator (failed before, passes after) |
+| `server/demo-request/node-server.ts` | Client IP from the TCP connection; forged forwarding headers ignored; `TRUST_PROXY=1` option | Rate-limit bypass | `node-server.test.ts` (fails on the old adapter, passes on the new) |
+| `server/demo-request/handler.ts` | Claim the request id before delivery (`409 in-progress`); bounded rate-limit memory; top-level error wrapper (generic 500 with CORS) | Duplicate leads, memory growth, crash or opaque errors | `handler.test.ts` (+3 tests, 17 total) |
+| `src/lib/demoValidation.ts` | Strict single-address email pattern | Multiple reply-to recipients | Unit test |
+| `src/lib/demoRequest.ts` | Message for `in-progress` | New server response | TS |
+| `src/config/site.ts` | Demo endpoint accepted only over HTTPS (localhost http for testing) | Never post personal data in plain text | Build with an `http://` endpoint: the form shows "not connected" |
+| `src/app/not-found.tsx` | Removed the duplicate robots meta | Two robots tags on the 404 | Head-tag audit |
+| `src/app/globals.css` | 11px labels → 12px; `.item__more` and eyebrow links at least 24px tall | Mobile legibility and touch targets | QA at 6 viewports; screenshots |
+| `src/app/demo`, `src/app/product`, `src/app/features`, `src/components/ui/ForwardPage.tsx` (new) | Noindex forwarding aliases with canonical | Typed or shared URLs returned 404 | QA alias checks; `verify-live` |
+| `src/content/about.ts`, `src/content/seo.ts` | Concrete security wording; `/about` `lastModified` 2026-10-06 | Vague claim; accurate sitemap date | QA |
+| `scripts/qa.mjs` | Viewports 375 and 414; edge, touch-target, clipped-text, small-text and image checks; trailing-slash tolerant (runs against production); alias checks | Mobile QA depth; live QA | Passes locally (next start and Pages emulator) |
+| `scripts/verify-live.mjs` (new) | Live production verifier | Production verification from CI | Dry run against the emulator |
+| `.github/workflows/pages.yml` | `build-info.json` with the commit; post-deploy `verify-live` job (live verifier + browser QA against production) | Real production verification after every deploy | First run: see audit L.6 |
+| `server/demo-request/node-server.test.ts` (new), `package.json` | Adapter spoofing test included in `npm test` | Regression guard | 17/17 |
+| `README.md`, `server/demo-request/README.md` | Aliases, live verification, `TRUST_PROXY`, in-progress code | Documentation | — |
+| `MARKETING_WEBSITE_AUDIT.md` | Launch hardening section | Documentation | — |

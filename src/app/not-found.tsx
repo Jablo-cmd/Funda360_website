@@ -2,9 +2,9 @@ import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+// Next.js adds <meta name="robots" content="noindex"> to the not-found page itself.
 export const metadata: Metadata = {
   title: 'Page not found',
-  robots: { index: false, follow: true },
 };
 
 export default function NotFound() {

@@ -56,6 +56,10 @@ jobs:
           NEXT_PUBLIC_SOCIAL_PROFILES: ${{ vars.NEXT_PUBLIC_SOCIAL_PROFILES }}
         run: npm run build
 
+      # Lets the post-deploy job confirm which commit the live site is serving.
+      - name: Record build commit
+        run: printf '{"commit":"%s"}\n' "$GITHUB_SHA" > out/build-info.json
+
       # Fails the deploy if the production build is not crawlable, mis-canonicalised,
       # missing metadata/social images, or lists noindex pages in the sitemap.
       - name: Verify production SEO build
@@ -81,3 +85,39 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # Post-deploy: verify the real production site from GitHub's runners.
+  # Waits for the new commit to be served, then checks HTTP behaviour, SEO
+  # output, links and assets (verify-live.mjs) and runs the full browser QA
+  # (axe, six viewports, navigation, demo form) against production.
+  verify-live:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify live site (HTTP, SEO, links, assets)
+        env:
+          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT }}
+        run: node scripts/verify-live.mjs https://funda360.aurisnexus.co.za "$GITHUB_SHA"
+
+      - name: Install Chromium
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Browser QA against production
+        env:
+          QA_BASE_URL: https://funda360.aurisnexus.co.za
+          CHROMIUM_PATH: ""
+          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT }}
+          NEXT_PUBLIC_APP_LOGIN_URL: https://app.funda360.aurisnexus.co.za/login
+        run: node scripts/qa.mjs

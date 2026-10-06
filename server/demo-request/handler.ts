@@ -48,7 +48,9 @@ const REQUEST_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
  * de-duplicate (the Resend call also sends it as an Idempotency-Key).
  */
 const recentByClient = new Map<string, number[]>();
-const seenRequestIds = new Map<string, number>();
+/** Request ids that were delivered (timestamp) or are being delivered right now ('pending'). */
+const seenRequestIds = new Map<string, number | 'pending'>();
+const MAX_TRACKED_CLIENTS = 5000;
 
 /** Test hook: clears the in-memory rate-limit and duplicate state. */
 export function resetEndpointState() {
@@ -56,9 +58,27 @@ export function resetEndpointState() {
   seenRequestIds.clear();
 }
 
-type ErrorCode = 'bad-request' | 'forbidden' | 'validation' | 'too-fast' | 'rate-limited' | 'verification' | 'not-configured' | 'delivery';
+type ErrorCode = 'bad-request' | 'forbidden' | 'validation' | 'too-fast' | 'rate-limited' | 'verification' | 'not-configured' | 'delivery' | 'in-progress';
 
+/**
+ * Entry point. Unexpected errors become a generic 500 (with CORS headers so
+ * the form can show its own message); nothing internal is exposed.
+ */
 export async function handleDemoRequest(request: Request, env: DemoEndpointEnv, deps: Partial<Deps> = {}): Promise<Response> {
+  try {
+    return await handle(request, env, deps);
+  } catch (error) {
+    (deps.log ?? ((event, detail) => console.error(JSON.stringify({ event, ...detail }))))('demo_request_error', { type: error instanceof Error ? error.name : typeof error });
+    const origin = request.headers.get('Origin') ?? '';
+    const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim().replace(/\/$/, ''));
+    return new Response(JSON.stringify({ ok: false, error: 'delivery' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', Vary: 'Origin', ...(origin && allowed.includes(origin) ? { 'Access-Control-Allow-Origin': origin } : {}) },
+    });
+  }
+}
+
+async function handle(request: Request, env: DemoEndpointEnv, deps: Partial<Deps>): Promise<Response> {
   const d: Deps = { fetch: deps.fetch ?? fetch, now: deps.now ?? Date.now, log: deps.log ?? ((event, detail) => console.log(JSON.stringify({ event, ...detail }))) };
 
   const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean);
@@ -105,6 +125,11 @@ export async function handleDemoRequest(request: Request, env: DemoEndpointEnv, 
 
   // Rate limit per client address (best effort; see note above).
   const client = request.headers.get('CF-Connecting-IP') ?? request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ?? 'unknown';
+  // Keep memory bounded: drop clients whose window has passed once the map grows.
+  if (recentByClient.size > MAX_TRACKED_CLIENTS) {
+    for (const [key, times] of recentByClient) if (times.every((t) => now - t >= RATE_LIMIT.windowMs)) recentByClient.delete(key);
+    if (recentByClient.size > MAX_TRACKED_CLIENTS) recentByClient.clear();
+  }
   const recent = (recentByClient.get(client) ?? []).filter((t) => now - t < RATE_LIMIT.windowMs);
   if (recent.length >= RATE_LIMIT.max) {
     d.log('demo_request_rejected', { reason: 'rate-limited' });
@@ -131,8 +156,10 @@ export async function handleDemoRequest(request: Request, env: DemoEndpointEnv, 
   }
 
   // Duplicate (double click, retry after a lost response): acknowledge without delivering twice.
-  for (const [id, at] of seenRequestIds) if (now - at > DUPLICATE_TTL_MS) seenRequestIds.delete(id);
-  if (requestId && seenRequestIds.has(requestId)) return json(200, { ok: true });
+  for (const [id, at] of seenRequestIds) if (at !== 'pending' && now - at > DUPLICATE_TTL_MS) seenRequestIds.delete(id);
+  const seen = requestId ? seenRequestIds.get(requestId) : undefined;
+  if (seen === 'pending') return fail(409, 'in-progress');
+  if (seen !== undefined) return json(200, { ok: true });
 
   const webhookReady = Boolean(env.DEMO_REQUEST_WEBHOOK_URL);
   const emailReady = Boolean(env.RESEND_API_KEY && env.DEMO_REQUEST_EMAIL_TO && env.DEMO_REQUEST_EMAIL_FROM);
@@ -142,12 +169,17 @@ export async function handleDemoRequest(request: Request, env: DemoEndpointEnv, 
   }
 
   const submission = buildSubmission(data, requestId || `srv-${now.toString(36)}`, new Date(now).toISOString(), origin);
+  // Claim the id before delivering so a concurrent copy of the same request is not delivered too.
+  if (requestId) seenRequestIds.set(requestId, 'pending');
   const results = await Promise.all([
     webhookReady ? deliverWebhook(submission, env, d) : Promise.resolve(null),
     emailReady ? deliverEmail(submission, env, d) : Promise.resolve(null),
   ]);
   // Succeed if at least one configured destination accepted it; the person must not resubmit.
-  if (!results.some((r) => r === true)) return fail(502, 'delivery');
+  if (!results.some((r) => r === true)) {
+    if (requestId) seenRequestIds.delete(requestId);
+    return fail(502, 'delivery');
+  }
 
   if (requestId) seenRequestIds.set(requestId, now);
   d.log('demo_request_delivered', { webhook: results[0], email: results[1] });

@@ -177,7 +177,7 @@ export const routeSeo = {
     socialTitle: 'About Funda360',
     primaryIntent: 'about Funda360',
     secondaryIntents: ['Auris Nexus Technologies', 'school management software company South Africa'],
-    lastModified: UPDATED,
+    lastModified: '2026-10-06',
   },
   '/security': {
     path: '/security',

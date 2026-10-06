@@ -166,3 +166,47 @@ test('rejects non-JSON, oversized and malformed bodies', async () => {
   const get = await handleDemoRequest(new Request('https://demo.example.org/', { headers: { Origin: ORIGIN } }), webhookEnv, { log: quiet });
   assert.equal(get.status, 405);
 });
+
+test('delivers concurrent copies of the same request only once', async () => {
+  let release: () => void = () => {};
+  const gate = new Promise<void>((r) => (release = r));
+  const calls: string[] = [];
+  const slowFetch = (async (url: string) => {
+    calls.push(String(url));
+    await gate;
+    return new Response('{}', { status: 200 });
+  }) as unknown as typeof fetch;
+  const headers = { 'CF-Connecting-IP': '203.0.113.77' };
+  const first = handleDemoRequest(post({ ...valid, requestId: 'req-concurrent-1' }, headers), webhookEnv, { fetch: slowFetch, log: quiet });
+  await new Promise((r) => setTimeout(r, 10));
+  const second = await handleDemoRequest(post({ ...valid, requestId: 'req-concurrent-1' }, headers), webhookEnv, { fetch: slowFetch, log: quiet });
+  assert.equal(second.status, 409);
+  assert.equal((await second.json()).error, 'in-progress');
+  release();
+  assert.equal((await first).status, 200);
+  assert.equal(calls.length, 1);
+});
+
+test('turns unexpected errors into a generic 500 with CORS and no internals', async () => {
+  const throwingFetch = (() => {
+    throw new TypeError('secret internal detail');
+  }) as unknown as typeof fetch;
+  const env = { ...webhookEnv, TURNSTILE_SECRET_KEY: 'ts' };
+  // verifyTurnstile catches fetch errors, so break the request body reader instead.
+  const broken = post(valid);
+  Object.defineProperty(broken, 'text', { value: () => Promise.reject(new Error('stream failed: secret')) });
+  const res = await handleDemoRequest(broken, env, { fetch: throwingFetch, log: quiet });
+  assert.equal(res.status, 500);
+  assert.equal(res.headers.get('Access-Control-Allow-Origin'), ORIGIN);
+  const text = await res.text();
+  assert.ok(!text.includes('secret'));
+  assert.deepEqual(JSON.parse(text), { ok: false, error: 'delivery' });
+});
+
+test('rejects email values that could address more than one recipient', async () => {
+  for (const email of ['a@b.co,evil@x.org', '"Name" <a@b.co>', 'a;b@c.de']) {
+    const res = await handleDemoRequest(post({ ...valid, email, requestId: `req-mail-${email.length}000` }), webhookEnv, { fetch: fakeFetch().fn, log: quiet });
+    assert.equal(res.status, 422, email);
+    assert.ok((await res.json()).fields.email);
+  }
+});

@@ -451,3 +451,107 @@ No duplicate or synonym pages were created.
   - Turnstile loads only when configured, and only on `/request-demo`.
   - The build-only font packages for OG images were moved to devDependencies.
   - Added `favicon.ico` and a 180×180 `apple-icon.png`, rendered from the existing icon.
+
+---
+
+# Launch hardening (2026-10-06)
+
+Scope: verify and harden the approved Phase 3.1 site for launch. No redesign,
+no route changes, no changes to the Funda360 application.
+
+## L.1 Production verification approach
+
+This development environment cannot reach `funda360.aurisnexus.co.za` (the
+egress proxy refuses it). The live site is therefore verified **from GitHub's
+runners**. A new `verify-live` job runs after every deploy:
+
+1. **Commit check:** waits until `/build-info.json` reports the deployed commit, because the Pages CDN can serve the previous build for a few minutes.
+2. **`scripts/verify-live.mjs`** checks:
+   - `http://` redirects to `https://`;
+   - production `robots.txt`;
+   - `sitemap.xml`: content type, duplicates, correct host;
+   - every sitemap URL: HTTP 200, `text/html`, canonical, `index, follow`, title, description, `og:url`, Twitter card, `og:image` (fetched; must be `image/png`), valid JSON-LD, no localhost or preview hosts;
+   - unique titles and descriptions;
+   - the slash-less variant of each URL must redirect (301) to the canonical;
+   - every internal link and asset on those pages must return 200;
+   - `/login/`, `/privacy/`, `/terms/`, `/demo/`, `/product/`, `/features/` and a draft article must be 200, noindex and absent from the sitemap;
+   - an unknown URL must return a 404 with the "Page not found" page;
+   - icons;
+   - the demo endpoint: a warning if not connected; if connected, a CORS preflight and a 405 for GET.
+3. **`scripts/qa.mjs` with `QA_BASE_URL` set to production:**
+   - the full browser QA: axe WCAG 2.1 AA on 28 routes, six viewports, navigation, keyboard, demo form, crawl.
+
+Section L.6 gives the result of the first run. Before pushing, both scripts
+were dry-run locally against the production export served by a GitHub Pages
+emulator (301 for slash-less URLs, `404.html`). Both passed.
+
+## L.2 Defects found and fixed
+
+| # | Defect | Impact | Fix |
+| --- | --- | --- | --- |
+| 1 | On the static export `usePathname()` returns `/ai/` while nav hrefs are `/ai` | **Production:** the current page was never marked `aria-current` and the active nav state was lost | `SiteHeader` compares paths without the trailing slash |
+| 2 | The demo endpoint's Node adapter trusted client-sent `CF-Connecting-IP` / `X-Forwarded-For` | Rate limit could be bypassed by forging headers | The address comes from the TCP connection; `TRUST_PROXY=1` for exactly one trusted proxy; regression test proves the old code failed |
+| 3 | Two concurrent copies of the same request could both be delivered | Possible duplicate leads | The request id is claimed before delivery; a concurrent copy gets `409 in-progress` (tested) |
+| 4 | Unexpected handler errors would crash the Node process or return a 500 without CORS | Endpoint downtime; misleading "network" error in the form | Top-level wrapper returns a generic 500 JSON with CORS and no internals (tested) |
+| 5 | Rate-limit memory grew without bound | Slow memory growth under abuse | Bounded and pruned |
+| 6 | The email pattern accepted `a@b.co,evil@x.org` and display-name forms | Reply-to could address several recipients | One plain address only (tested) |
+| 7 | A non-HTTPS demo endpoint would have been used | Personal data could be posted in plain text | Only `https://` (or `http://localhost` for testing) is accepted |
+| 8 | 404 page emitted two `robots` meta tags | Conflicting head tags | Only Next.js's own `noindex` remains |
+| 9 | 11px labels (badges, card categories, article meta, demo-data note, footer headings) | Hard to read on phones | 12px |
+| 10 | "Read more" style links and the article category link were 19–22px tall | Small touch targets on mobile | Minimum 24px height |
+| 11 | `/demo`, `/product`, `/features` returned 404 | Lost visitors from typed or shared links | Noindex forwarding pages with canonical to the real page |
+| 12 | About: "School information is protected by default" | Vague claim | "Access is restricted by school and by role by default, and enforced in the database" |
+| 13 | QA assumed slash-less URLs | QA could not run against production | URL checks accept the trailing slash |
+
+## L.3 Mobile and accessibility QA
+
+- **Viewports:** 320, 375, 390, 414, 768 and 1280 px, on all 28 routes.
+- **New automated checks, per page and viewport:**
+  - CTAs or buttons touching the screen edge (items in horizontal scroll strips excepted);
+  - touch targets under 24×24 px (inline text links and stretched-link cards excepted);
+  - clipped text;
+  - text under 12 px;
+  - images outside the viewport;
+  - plus the existing horizontal-overflow check.
+- **Results:** all pass after the fixes in L.2.
+- **Unchanged and still passing:**
+  - axe: 0 violations;
+  - one `h1` per page and no skipped heading levels;
+  - keyboard: skip link, menus, Escape and focus return;
+  - form labels, error summary and focus;
+  - alt text;
+  - reduced-motion handling.
+
+## L.4 Security review (marketing site)
+
+- **No secrets anywhere:**
+  - only `NEXT_PUBLIC_*` public values reach the browser;
+  - endpoint secrets live only on the endpoint host;
+  - the E2E test scans the bundle;
+  - the repository was grepped for key patterns.
+- **HTML injection:** JSON-LD is serialised with `<` escaped. The only other `dangerouslySetInnerHTML` is a constant one-line script. No user content is rendered as HTML.
+- **No open redirects:** `/login` and the alias pages forward to build-time constants, never to query parameters.
+- **Endpoint:**
+  - origin allow-list with no wildcard;
+  - CORS echoed only for allowed origins;
+  - POST and JSON only, 16 KB limit;
+  - honeypot, timing check, per-client rate limit (spoof-proof in the Node adapter; Cloudflare's `CF-Connecting-IP` on Workers);
+  - optional Turnstile;
+  - de-duplication;
+  - generic errors only;
+  - no personal data in logs.
+- **Known limits (documented, not code defects):**
+  - The timing value is client-reported, so it only deters naive bots. Turnstile and the platform rate-limiting rule are the strong controls.
+  - GitHub Pages cannot set HTTP security headers such as CSP or HSTS preload. A CDN in front (for example Cloudflare) would be needed for that.
+
+## L.5 Remaining external configuration (not complete until done)
+
+| Item | Where | Status |
+| --- | --- | --- |
+| Deploy the demo endpoint (`server/demo-request`), set `ALLOWED_ORIGINS`, at least one delivery option (Resend API key + to/from addresses on a verified domain, or a webhook URL + secret), recommended `TURNSTILE_SECRET_KEY` and a rate-limiting rule | Cloudflare (or another host), Resend | **Not configured.** The live form says online requests are not connected |
+| `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT` (and `NEXT_PUBLIC_TURNSTILE_SITE_KEY`) as repository variables, then re-run the workflow | GitHub > Settings > Secrets and variables > Actions > Variables | **Not set** (confirmed: the live page shows the "not connected" notice; the workflow log shows the variables empty) |
+| Search Console: Domain property via DNS TXT (preferred) or `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`; submit `https://funda360.aurisnexus.co.za/sitemap.xml` | DNS, Google Search Console | **Not verified.** No token in the repository or the variables |
+| Bing Webmaster Tools: import from Search Console or `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Bing | **Not verified** |
+| "Enforce HTTPS" in the repository's Pages settings | GitHub > Settings > Pages | Checked by `verify-live` (`http://` must 301 to `https://`) |
+| Final privacy policy and terms; then remove `noIndex` for `/privacy`, `/terms` | Legal | Pending |
+| `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_DEVELOPER_URL`, `NEXT_PUBLIC_SOCIAL_PROFILES` | Repository variables | CONFIRM; leave empty until confirmed |

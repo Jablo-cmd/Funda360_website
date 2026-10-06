@@ -62,7 +62,7 @@ export const aboutPage = {
     heading: 'How we work',
     items: [
       { title: 'Learner-centred', description: 'Every capability connects back to the learner.' },
-      { title: 'Secure by design', description: 'School information is protected by default.' },
+      { title: 'Secure by design', description: 'Access is restricted by school and by role by default, and enforced in the database.' },
       { title: 'Honest about our product', description: 'We are clear about what is available today and what is on the roadmap.' },
       { title: 'Built for local context', description: 'Designed with South African schools and privacy requirements in mind.' },
     ] satisfies Feature[],

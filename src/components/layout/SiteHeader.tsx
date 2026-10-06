@@ -28,7 +28,8 @@ function isInSection(pathname: string, item: NavItem) {
  * - Without JavaScript the navigation is fully visible (see html[data-js] in CSS).
  */
 export function SiteHeader() {
-  const pathname = usePathname() ?? '/';
+  // Static export serves /platform/ (trailing slash) while nav hrefs are /platform: compare without it.
+  const pathname = (usePathname() ?? '/').replace(/(.)\/$/, '$1');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);

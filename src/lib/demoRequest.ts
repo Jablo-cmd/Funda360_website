@@ -57,6 +57,8 @@ export async function submitDemoRequest(data: DemoRequest, meta: SubmitMeta): Pr
         return { status: 'not-configured' };
       case 'too-fast':
         return { status: 'error', message: 'Please take a moment to check your details, then send your request again.' };
+      case 'in-progress':
+        return { status: 'error', message: 'Your request is already being sent. Please wait a moment before trying again.' };
       case 'rate-limited':
         return { status: 'error', message: 'Several requests were sent from your connection in a short time. Please wait a few minutes and try again.' };
       case 'verification':

@@ -5,9 +5,16 @@ import { handleDemoRequest, type DemoEndpointEnv } from './handler.ts';
  * Node adapter for the Request a Demo endpoint (self-hosting or local testing).
  *   PORT=8787 ALLOWED_ORIGINS=http://localhost:3000 DEMO_REQUEST_WEBHOOK_URL=... node server/demo-request/node-server.ts
  * Requires Node 22.18+ (runs TypeScript directly). Put it behind HTTPS in production.
+ *
+ * Client address (used for rate limiting): taken from the TCP connection.
+ * Client-sent CF-Connecting-IP / X-Forwarded-For headers are ignored, so they
+ * cannot be forged to dodge the rate limit. Behind exactly one trusted reverse
+ * proxy, set TRUST_PROXY=1 to use the address that proxy appended (the last
+ * X-Forwarded-For entry).
  */
 const env = process.env as DemoEndpointEnv;
 const port = Number(process.env.PORT ?? 8787);
+const trustProxy = process.env.TRUST_PROXY === '1';
 
 createServer(async (req, res) => {
   const chunks: Buffer[] = [];
@@ -20,7 +27,10 @@ createServer(async (req, res) => {
   }
   const headers = new Headers();
   for (const [key, value] of Object.entries(req.headers)) if (typeof value === 'string') headers.set(key, value);
-  if (!headers.has('cf-connecting-ip') && req.socket.remoteAddress) headers.set('x-forwarded-for', headers.get('x-forwarded-for') ?? req.socket.remoteAddress);
+  const forwarded = headers.get('x-forwarded-for')?.split(',').map((v) => v.trim()).filter(Boolean) ?? [];
+  const clientIp = (trustProxy ? forwarded.at(-1) : undefined) ?? req.socket.remoteAddress ?? 'unknown';
+  headers.delete('cf-connecting-ip');
+  headers.set('x-forwarded-for', clientIp);
   const method = req.method ?? 'GET';
   const request = new Request(`http://localhost${req.url ?? '/'}`, { method, headers, body: method === 'GET' || method === 'HEAD' ? undefined : Buffer.concat(chunks) });
   const response = await handleDemoRequest(request, env);
