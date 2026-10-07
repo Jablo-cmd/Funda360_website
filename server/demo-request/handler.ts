@@ -40,6 +40,8 @@ const MIN_ELAPSED_MS = 3000;
 const RATE_LIMIT = { max: 5, windowMs: 10 * 60 * 1000 };
 const DUPLICATE_TTL_MS = 60 * 60 * 1000;
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
+/** Sent on every outbound call. Resend rejects API requests without a User-Agent; Workers' fetch sends none by default. */
+const USER_AGENT = 'funda360-demo-request/1.0';
 
 /**
  * Best-effort, per-instance memory. Serverless platforms run several
@@ -216,7 +218,7 @@ function buildSubmission(data: DemoRequest, requestId: string, submittedAt: stri
 
 async function deliverWebhook(submission: DemoSubmission, env: DemoEndpointEnv, d: Deps): Promise<boolean> {
   const body = JSON.stringify(submission);
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-Request-Id': submission.requestId };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'User-Agent': USER_AGENT, 'X-Request-Id': submission.requestId };
   if (env.DEMO_REQUEST_WEBHOOK_SECRET) headers['X-Funda360-Signature'] = `sha256=${await hmacSha256Hex(env.DEMO_REQUEST_WEBHOOK_SECRET, body)}`;
   try {
     const response = await d.fetch(env.DEMO_REQUEST_WEBHOOK_URL as string, { method: 'POST', headers, body });
@@ -251,7 +253,7 @@ async function deliverEmail(submission: DemoSubmission, env: DemoEndpointEnv, d:
   try {
     const response = await d.fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': `demo-${submission.requestId}` },
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'User-Agent': USER_AGENT, 'Idempotency-Key': `demo-${submission.requestId}` },
       body: JSON.stringify({
         from: env.DEMO_REQUEST_EMAIL_FROM,
         to: (env.DEMO_REQUEST_EMAIL_TO as string).split(',').map((s) => s.trim()).filter(Boolean),

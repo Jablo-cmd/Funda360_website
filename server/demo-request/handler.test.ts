@@ -67,6 +67,8 @@ test('sends email through Resend with an idempotency key and reply-to', async ()
   assert.equal(f.calls[0].url, 'https://api.resend.com/emails');
   const headers = f.calls[0].init.headers as Record<string, string>;
   assert.equal(headers['Idempotency-Key'], 'demo-req-12345678');
+  // Resend rejects requests without a User-Agent (Cloudflare Workers send none by default).
+  assert.match(headers['User-Agent'], /^funda360-demo-request\//);
   const body = JSON.parse(String(f.calls[0].init.body));
   assert.equal(body.reply_to, 'test.person@example.org');
   assert.deepEqual(body.to, ['sales@example.org']);
