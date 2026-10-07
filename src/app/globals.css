@@ -893,6 +893,34 @@ main:focus {
   color: var(--blue-600);
 }
 
+/* Header wordmark: a little larger and bolder than the base logo, with a soft
+   brand-blue glow so "Funda360" is the first thing people notice. */
+.site-header__brand .logo {
+  gap: 0.7rem;
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  text-shadow: 0 0 14px rgb(37 99 235 / 0.18);
+}
+
+.site-header__brand .logo svg {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 2px 8px rgb(37 99 235 / 0.28));
+}
+
+.site-header__brand .logo__accent {
+  text-shadow:
+    0 0 10px rgb(37 99 235 / 0.35),
+    0 0 22px rgb(37 99 235 / 0.2);
+}
+
+@media (min-width: 48rem) {
+  .site-header__brand .logo {
+    font-size: 1.5rem;
+  }
+}
+
 .logo--inverse {
   color: var(--white);
 }
