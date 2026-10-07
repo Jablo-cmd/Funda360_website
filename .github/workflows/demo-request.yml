@@ -106,9 +106,16 @@ jobs:
           {"name":"Funda360 delivery test","organisation":"Deployment check (not a real request)","email":"delivery-test@example.com","phone":"","role":"other","size":"not-applicable","interests":["whole-platform"],"message":"Automated test from the Deploy Funda360 Demo Request Worker workflow, run $GITHUB_RUN_ID. You can ignore this email.","consent":true,"website":"","requestId":"ci-test-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT","elapsedMs":60000}
           JSON
           )
+          # Capture the Worker's own log while the test runs (shows the provider's error if delivery fails).
+          (cd server/demo-request && timeout 60 npx --yes wrangler@4 tail funda360-demo-request --format pretty > ../../tail.log 2>&1) &
+          sleep 15
           status=$(curl -sS -o response.json -w '%{http_code}' -X POST "$WORKER_URL/" \
             -H 'Content-Type: application/json' -H 'Origin: https://funda360.aurisnexus.co.za' --data "$body")
           echo "HTTP $status: $(cat response.json)"
+          sleep 8
+          echo "----- Worker log during the test -----"
+          grep -E 'demo_request|POST|Exception|Error' tail.log || cat tail.log
+          echo "--------------------------------------"
           if [ "$status" != "200" ]; then
             echo "::error::Test request was not delivered (HTTP $status). 503 not-configured = no delivery settings on the Worker; 502 delivery = Resend rejected it (check the API key and that funda360.aurisnexus.co.za is verified in Resend). With Turnstile enabled the test cannot pass."
             exit 1

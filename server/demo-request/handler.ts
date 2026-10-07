@@ -262,11 +262,21 @@ async function deliverEmail(submission: DemoSubmission, env: DemoEndpointEnv, d:
         text,
       }),
     });
-    if (!response.ok) d.log('demo_request_email_failed', { status: response.status });
+    if (!response.ok) d.log('demo_request_email_failed', { status: response.status, reason: await providerError(response) });
     return response.ok;
-  } catch {
-    d.log('demo_request_email_failed', { status: 'network' });
+  } catch (error) {
+    d.log('demo_request_email_failed', { status: 'network', reason: error instanceof Error ? error.name : 'unknown' });
     return false;
+  }
+}
+
+/** The provider's error name/message for operators, with email addresses removed. */
+async function providerError(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as { name?: string; message?: string };
+    return `${body.name ?? ''} ${body.message ?? ''}`.replace(/[^\s@<>]+@[^\s@<>]+/g, '[email]').trim().slice(0, 300);
+  } catch {
+    return '';
   }
 }
 
