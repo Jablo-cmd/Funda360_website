@@ -453,6 +453,28 @@ try {
     const html = await (await fetch(`${BASE}/login`)).text();
     if (!html.includes(`http-equiv="refresh" content="0;url=${EXPECTED_LOGIN}"`)) fail('login', '/login does not forward to the application');
     if (!html.includes('noindex')) fail('login', '/login should be noindex');
+    // Old application links (the app used to live on this domain) forward to the app host,
+    // keeping the query string and #fragment; unknown marketing paths still show the 404 page.
+    {
+      const appOrigin = new URL(EXPECTED_LOGIN).origin;
+      const ctx = await browser.newContext();
+      const page = await ctx.newPage();
+      await page.route(`${appOrigin}/**`, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>app</title>' }));
+      for (const path of ['/dashboard', '/parent/children?tab=fees', '/reset-password#access_token=abc&type=recovery', '/learners/123']) {
+        await page.goto(BASE + path, { waitUntil: 'commit' }).catch(() => {});
+        try {
+          await page.waitForURL((url) => url.origin === appOrigin, { timeout: 10000 });
+        } catch {
+          fail('app links', `${path} was not forwarded to ${appOrigin}`);
+          continue;
+        }
+        if (page.url() !== appOrigin + path) fail('app links', `${path} forwarded to ${page.url()}`);
+      }
+      const res = await page.goto(BASE + '/no-such-marketing-page', { waitUntil: 'domcontentloaded' });
+      if (res?.status() !== 404 || new URL(page.url()).origin === appOrigin) fail('404', 'unknown marketing path should stay on the 404 page');
+      if ((await page.locator('h1').textContent())?.trim() !== 'Page not found') fail('404', 'missing "Page not found" heading');
+      await ctx.close();
+    }
     // Short alias URLs forward to the real pages and stay out of search.
     for (const [alias, target] of [['/demo', '/request-demo'], ['/product', '/platform'], ['/features', '/platform']]) {
       const page = await (await fetch(`${BASE}${alias}`)).text();

@@ -601,3 +601,16 @@ Dependency audit:
 - `npm audit --omit=dev`: **0 vulnerabilities** (nothing shipped to the site is affected).
 - `npm audit`: 4 "high" findings, all one development-only chain (`@next/eslint-plugin-next` → `fast-glob` → `micromatch` → `braces`). It affects only lint runs on trusted repository files.
 - No patched `braces` exists. The suggested `--force` fix would downgrade the Next.js lint plugin to v14 (breaking), so it was not applied. Re-check when the plugin updates `fast-glob`.
+
+## L.7 Old application links (reported 2026-10-07)
+
+- **Problem:** `https://funda360.aurisnexus.co.za/dashboard` showed the marketing 404 page.
+  - The Funda360 application used to be served from this domain. Application commit `e09779f` moved it to `app.funda360.aurisnexus.co.za`.
+  - Bookmarks and links still point at the old paths. That includes links in emails, such as password reset, account activation and email verification.
+- **Fix:** the 404 page now forwards any path whose first segment is an application route to the same path on the application host.
+  - Application routes include `/dashboard`, `/learners`, `/fees`, `/parent/...`, `/reset-password` and `/activate-account`; the full list is in `src/content/appRoutes.ts`, taken read-only from the app's `AppRoutes.tsx`.
+  - The forward keeps the query string and `#fragment`, where sign-in tokens travel.
+  - The destination host is fixed (it comes from `NEXT_PUBLIC_APP_LOGIN_URL`), so this cannot be used as an open redirect.
+  - Unknown marketing paths still return a 404. The page also now says where the application has moved.
+- **Tests:** `qa.mjs` checks four application paths, including a reset link with a token in the fragment, plus an unknown path. It runs locally and against production after every deploy.
+- **Maintenance:** when the application adds a new top-level route, add it to `src/content/appRoutes.ts`.

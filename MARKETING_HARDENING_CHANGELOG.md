@@ -124,3 +124,8 @@ or URLs changed, so no redirects were needed.
 | `server/demo-request/node-server.test.ts` (new), `package.json` | Adapter spoofing test included in `npm test` | Regression guard | 17/17 |
 | `README.md`, `server/demo-request/README.md` | Aliases, live verification, `TRUST_PROXY`, in-progress code | Documentation | — |
 | `MARKETING_WEBSITE_AUDIT.md` | Launch hardening section | Documentation | — |
+
+| File | Change | Reason | Validation |
+| --- | --- | --- | --- |
+| `src/content/appRoutes.ts` (new), `src/app/not-found.tsx` | 404 page forwards old application paths to `app.funda360.aurisnexus.co.za`, keeping the query string and #fragment; adds a "the application has moved" note | `/dashboard` and emailed reset/activation links hit the marketing 404 after the app moved domains | QA: 4 app paths forwarded exactly; unknown path stays 404 (local, Pages emulator, production) |
+| `scripts/qa.mjs` | Application-link forwarding test | Regression guard | Passes |
