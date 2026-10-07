@@ -1,0 +1,44 @@
+name: Check email DNS (Resend)
+
+# Manual: shows what public DNS returns for the Resend records of
+# funda360.aurisnexus.co.za, from three resolvers, plus common mistakes
+# (records created with the zone name added twice).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Look up records
+        run: |
+          D=funda360.aurisnexus.co.za
+          for resolver in 1.1.1.1 8.8.8.8; do
+            echo "===== Resolver $resolver ====="
+            for rec in "TXT resend._domainkey.$D" "CNAME send.$D" "CNAME rsend.$D" "MX send.$D" "TXT send.$D" "TXT _dmarc.aurisnexus.co.za" "CNAME $D"; do
+              set -- $rec
+              echo "--- $1 $2"
+              dig +short "$1" "$2" @"$resolver" || true
+            done
+          done
+          echo "===== Authoritative name servers for aurisnexus.co.za ====="
+          dig +short NS aurisnexus.co.za
+          NS=$(dig +short NS aurisnexus.co.za | head -1)
+          if [ -n "$NS" ]; then
+            echo "===== Asking $NS directly ====="
+            for rec in "TXT resend._domainkey.$D" "CNAME send.$D" "CNAME rsend.$D"; do
+              set -- $rec
+              echo "--- $1 $2"
+              dig +short "$1" "$2" @"$NS" || true
+            done
+          fi
+          echo "===== Common mistake: zone name added twice ====="
+          for name in "resend._domainkey.$D.aurisnexus.co.za" "send.$D.aurisnexus.co.za" "rsend.$D.aurisnexus.co.za"; do
+            echo "--- ANY $name"
+            dig +short TXT "$name" @1.1.1.1 || true
+            dig +short CNAME "$name" @1.1.1.1 || true
+          done
