@@ -47,7 +47,7 @@ Responses are `{ "ok": true }`, or `{ "ok": false, "error": "<code>" }` with one
 | `DEMO_REQUEST_WEBHOOK_SECRET` | endpoint (secret) | recommended with webhook | Body signed as `X-Funda360-Signature: sha256=<hex HMAC>` |
 | `RESEND_API_KEY` | endpoint (secret) | one delivery option | Email delivery through Resend |
 | `DEMO_REQUEST_EMAIL_TO` | endpoint (var) | with email | CONFIRM: the inbox that receives demo requests (comma-separated) |
-| `DEMO_REQUEST_EMAIL_FROM` | endpoint (var) | with email | CONFIRM: an address on a domain verified with Resend |
+| `DEMO_REQUEST_EMAIL_FROM` | endpoint (var, in `wrangler.toml`) | with email | `Funda360 Website <demo@funda360.aurisnexus.co.za>` (domain verified in Resend) |
 | `TURNSTILE_SECRET_KEY` | endpoint (secret) | optional, recommended | Pair it with the site key below |
 | `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT` | site build (public) | yes | The endpoint's HTTPS URL. Public by design; not a secret |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | site build (public) | with Turnstile | Turnstile site key |
@@ -89,7 +89,7 @@ values are skipped), checks `/healthz`, and can send one labelled test request.
    - `CLOUDFLARE_ACCOUNT_ID`
    - `RESEND_API_KEY`
    - `DEMO_REQUEST_EMAIL_TO`: the inbox that receives requests, kept out of the repository
-3. **GitHub > ... > Variables:** `DEMO_REQUEST_EMAIL_FROM`, for example `Funda360 Website <demo@funda360.aurisnexus.co.za>`. It must be on the verified domain.
+3. **From address:** already set in `wrangler.toml` as `Funda360 Website <demo@funda360.aurisnexus.co.za>`. No mailbox is needed for it; replies go to the requester.
 4. **Run the workflow:** Actions > **Deploy Funda360 Demo Request Worker** > Run workflow, with **send_test** ticked.
    - The run summary shows the Worker URL.
    - A test email titled "Funda360 demo request: Deployment check (not a real request)" should arrive.
@@ -100,7 +100,7 @@ values are skipped), checks `/healthz`, and can send one labelled test request.
 ```bash
 cd server/demo-request
 npx wrangler login
-npx wrangler secret put RESEND_API_KEY        # also DEMO_REQUEST_EMAIL_TO, DEMO_REQUEST_EMAIL_FROM (and optional webhook/Turnstile secrets)
+npx wrangler secret put RESEND_API_KEY        # also DEMO_REQUEST_EMAIL_TO (and optional webhook/Turnstile secrets)
 npx wrangler deploy                           # note the https://… URL it prints
 ```
 

@@ -9,12 +9,14 @@ compatibility_date = "2026-10-01"
 # Public, non-secret settings.
 [vars]
 ALLOWED_ORIGINS = "https://funda360.aurisnexus.co.za"
-# DEMO_REQUEST_EMAIL_TO and DEMO_REQUEST_EMAIL_FROM are set as Worker secrets
-# by the workflow (kept out of the repository so the inbox stays private).
+# Sender for demo-request emails. funda360.aurisnexus.co.za must be verified in
+# Resend. Replies go to the person who asked for the demo (reply_to).
+DEMO_REQUEST_EMAIL_FROM = "Funda360 Website <demo@funda360.aurisnexus.co.za>"
+# DEMO_REQUEST_EMAIL_TO is a Worker secret set by the workflow, so the
+# receiving inbox stays out of the repository.
 
 # Secrets (set by the workflow from GitHub, or with wrangler secret put):
 #   DEMO_REQUEST_EMAIL_TO        inbox(es) that receive demo requests
-#   DEMO_REQUEST_EMAIL_FROM      sender on a domain verified with Resend
 #   RESEND_API_KEY               email delivery through Resend (optional)
 #   DEMO_REQUEST_WEBHOOK_URL     webhook delivery to a CRM or form service (optional)
 #   DEMO_REQUEST_WEBHOOK_SECRET  HMAC signing secret for the webhook (optional)
