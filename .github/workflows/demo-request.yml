@@ -114,3 +114,25 @@ jobs:
             exit 1
           fi
           echo "Test request accepted. Check the DEMO_REQUEST_EMAIL_TO inbox for 'Funda360 demo request: Deployment check (not a real request)'." | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # If the test failed, ask Resend directly with the same key, sender and
+      # inbox, and print its exact error (the inbox and key are masked by GitHub).
+      - name: Diagnose email delivery
+        if: ${{ failure() && inputs.send_test }}
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          DEMO_REQUEST_EMAIL_TO: ${{ secrets.DEMO_REQUEST_EMAIL_TO }}
+        run: |
+          set -uo pipefail
+          from=$(sed -n 's/^DEMO_REQUEST_EMAIL_FROM = "\(.*\)"$/\1/p' server/demo-request/wrangler.toml)
+          to_json=$(printf '%s' "$DEMO_REQUEST_EMAIL_TO" | jq -R 'split(",") | map(gsub("^\\s+|\\s+$"; ""))')
+          payload=$(jq -n --arg from "$from" --argjson to "$to_json" '{from: $from, to: $to, subject: "Funda360 Resend diagnostic", text: "Direct test from the GitHub workflow. You can ignore this email."}')
+          echo "From: $from"
+          echo "API key present: $([ -n "$RESEND_API_KEY" ] && echo yes || echo NO)  (starts with re_: $([[ "$RESEND_API_KEY" == re_* ]] && echo yes || echo NO))"
+          status=$(curl -sS -o resend.json -w '%{http_code}' -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" -H 'Content-Type: application/json' --data "$payload")
+          echo "Resend answered HTTP $status:"
+          cat resend.json; echo
+          curl -sS -o domains.json -w '' -H "Authorization: Bearer $RESEND_API_KEY" https://api.resend.com/domains
+          echo "Domains visible to this key (sending-only keys cannot list domains):"
+          jq -r '.data[]? | "\(.name): \(.status)"' domains.json 2>/dev/null || cat domains.json
