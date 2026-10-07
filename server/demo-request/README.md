@@ -18,7 +18,7 @@ Browser form (static site) --HTTPS POST JSON--> endpoint --> webhook and/or emai
 | `worker.ts` | Cloudflare Workers entry point (recommended host) |
 | `node-server.ts` | Node adapter for self-hosting or local testing (Node 22.18+). Rate limits by the TCP address; client-sent `CF-Connecting-IP` / `X-Forwarded-For` are ignored unless `TRUST_PROXY=1` (exactly one trusted reverse proxy) |
 | `handler.test.ts`, `node-server.test.ts` | Unit tests and a Node-adapter spoofing test (`npm test`) |
-| `wrangler.toml.example` | Cloudflare configuration template (copy to `wrangler.toml`, which is git-ignored) |
+| `wrangler.toml` | Cloudflare Worker configuration (committed, no secrets) |
 
 Validation rules are shared with the browser form (`src/lib/demoValidation.ts`),
 so the server never accepts something the form would reject.
@@ -75,15 +75,33 @@ Webhook payload:
 
 The endpoint also exposes `GET /healthz` as a non-sensitive deployment/readiness probe. It returns `{ "ok": true, "service": "funda360-demo-request" }` and never exposes delivery credentials.
 
-The repository includes `.github/workflows/demo-request.yml`, a manual Cloudflare deployment workflow. Configure the GitHub repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, then run **Deploy Funda360 Demo Request Worker** from Actions. Delivery credentials remain on the Worker; Cloudflare recommends storing API keys and tokens as Worker secrets rather than plaintext variables.
+### Recommended: from GitHub (no command line)
 
+`.github/workflows/demo-request.yml` deploys the Worker, copies the delivery
+settings from GitHub to the Worker as Worker secrets (never printed; blank
+values are skipped), checks `/healthz`, and can send one labelled test request.
+
+1. **Resend:**
+   1. Add and verify the sending domain, for example `funda360.aurisnexus.co.za`, by adding the DNS records Resend shows.
+   2. Create an API key with **Sending access**, restricted to that domain.
+2. **GitHub > Settings > Secrets and variables > Actions > Secrets:**
+   - `CLOUDFLARE_API_TOKEN` (the "Edit Cloudflare Workers" token template)
+   - `CLOUDFLARE_ACCOUNT_ID`
+   - `RESEND_API_KEY`
+   - `DEMO_REQUEST_EMAIL_TO`: the inbox that receives requests, kept out of the repository
+3. **GitHub > ... > Variables:** `DEMO_REQUEST_EMAIL_FROM`, for example `Funda360 Website <demo@funda360.aurisnexus.co.za>`. It must be on the verified domain.
+4. **Run the workflow:** Actions > **Deploy Funda360 Demo Request Worker** > Run workflow, with **send_test** ticked.
+   - The run summary shows the Worker URL.
+   - A test email titled "Funda360 demo request: Deployment check (not a real request)" should arrive.
+5. **Connect the site:** set the variable `NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT` to the Worker URL and re-run the Pages workflow. Its live verification then checks the endpoint's CORS.
+
+### Manual alternative
 
 ```bash
 cd server/demo-request
-cp wrangler.toml.example wrangler.toml      # edit ALLOWED_ORIGINS / email vars
 npx wrangler login
-npx wrangler secret put RESEND_API_KEY       # and/or DEMO_REQUEST_WEBHOOK_URL, DEMO_REQUEST_WEBHOOK_SECRET, TURNSTILE_SECRET_KEY
-npx wrangler deploy                          # note the https://… URL it prints
+npx wrangler secret put RESEND_API_KEY        # also DEMO_REQUEST_EMAIL_TO, DEMO_REQUEST_EMAIL_FROM (and optional webhook/Turnstile secrets)
+npx wrangler deploy                           # note the https://… URL it prints
 ```
 
 Then:

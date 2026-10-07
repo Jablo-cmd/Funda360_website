@@ -1,7 +1,30 @@
 name: Deploy Funda360 Demo Request Worker
 
+# Manual: Actions > "Deploy Funda360 Demo Request Worker" > Run workflow.
+#
+# Deploys server/demo-request to Cloudflare Workers, then copies the delivery
+# settings from GitHub to the Worker (as Worker secrets, never printed), checks
+# /healthz and, if asked, sends one clearly labelled test demo request so you
+# can confirm the email arrives.
+#
+# GitHub repository secrets (Settings > Secrets and variables > Actions > Secrets):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   required to deploy
+#   RESEND_API_KEY                                Resend API key (sending access)
+#   DEMO_REQUEST_EMAIL_TO                         inbox(es) that receive requests, comma-separated
+#   DEMO_REQUEST_WEBHOOK_URL / _SECRET            optional webhook delivery
+#   TURNSTILE_SECRET_KEY                          optional Turnstile verification
+# GitHub repository variable (Settings > Secrets and variables > Actions > Variables):
+#   DEMO_REQUEST_EMAIL_FROM   e.g. Funda360 Website <demo@funda360.aurisnexus.co.za>
+#                             (the domain must be verified in Resend)
+# Empty values are skipped, so existing Worker secrets are never overwritten with blanks.
+
 on:
   workflow_dispatch:
+    inputs:
+      send_test:
+        description: Send one test demo request through the deployed Worker (delivers a real email)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -13,6 +36,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,6 +49,7 @@ jobs:
           node-version: 22
 
       - name: Deploy Cloudflare Worker
+        id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -30,8 +57,58 @@ jobs:
           workingDirectory: server/demo-request
           command: deploy
 
-      - name: Deployment configuration reminder
+      - name: Copy delivery settings to the Worker
+        working-directory: server/demo-request
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          DEMO_REQUEST_EMAIL_TO: ${{ secrets.DEMO_REQUEST_EMAIL_TO }}
+          DEMO_REQUEST_EMAIL_FROM: ${{ vars.DEMO_REQUEST_EMAIL_FROM }}
+          DEMO_REQUEST_WEBHOOK_URL: ${{ secrets.DEMO_REQUEST_WEBHOOK_URL }}
+          DEMO_REQUEST_WEBHOOK_SECRET: ${{ secrets.DEMO_REQUEST_WEBHOOK_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
         run: |
-          echo "Worker code deployed."
-          echo "Delivery secrets must exist on the Worker before the endpoint can accept real demo requests."
-          echo "Required: RESEND_API_KEY + DEMO_REQUEST_EMAIL_TO + DEMO_REQUEST_EMAIL_FROM, or DEMO_REQUEST_WEBHOOK_URL."
+          set -euo pipefail
+          for name in RESEND_API_KEY DEMO_REQUEST_EMAIL_TO DEMO_REQUEST_EMAIL_FROM DEMO_REQUEST_WEBHOOK_URL DEMO_REQUEST_WEBHOOK_SECRET TURNSTILE_SECRET_KEY; do
+            value="${!name:-}"
+            if [ -n "$value" ]; then
+              printf '%s' "$value" | npx --yes wrangler@4 secret put "$name" > /dev/null
+              echo "Set $name on the Worker."
+            else
+              echo "Skipped $name (not set in GitHub)."
+            fi
+          done
+
+      - name: Health check
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          echo "Worker URL: $WORKER_URL"
+          curl -fsS --retry 5 --retry-delay 3 "$WORKER_URL/healthz"
+          echo
+          {
+            echo "### Demo request Worker deployed"
+            echo ""
+            echo "Endpoint: \`$WORKER_URL\`"
+            echo ""
+            echo "Set the repository variable \`NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT\` to this URL, then re-run the Pages workflow."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Send a test demo request
+        if: ${{ inputs.send_test }}
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          body=$(cat <<JSON
+          {"name":"Funda360 delivery test","organisation":"Deployment check (not a real request)","email":"delivery-test@example.com","phone":"","role":"other","size":"not-applicable","interests":["whole-platform"],"message":"Automated test from the Deploy Funda360 Demo Request Worker workflow, run $GITHUB_RUN_ID. You can ignore this email.","consent":true,"website":"","requestId":"ci-test-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT","elapsedMs":60000}
+          JSON
+          )
+          status=$(curl -sS -o response.json -w '%{http_code}' -X POST "$WORKER_URL/" \
+            -H 'Content-Type: application/json' -H 'Origin: https://funda360.aurisnexus.co.za' --data "$body")
+          echo "HTTP $status: $(cat response.json)"
+          if [ "$status" != "200" ]; then
+            echo "::error::Test request was not delivered (HTTP $status). 503 not-configured = no delivery settings on the Worker; 502 delivery = Resend rejected it (check the API key and that the From domain is verified). With Turnstile enabled the test cannot pass."
+            exit 1
+          fi
+          echo "Test request accepted. Check the DEMO_REQUEST_EMAIL_TO inbox for 'Funda360 demo request: Deployment check (not a real request)'." | tee -a "$GITHUB_STEP_SUMMARY"

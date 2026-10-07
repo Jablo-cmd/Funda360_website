@@ -1,5 +1,7 @@
-# Copy to wrangler.toml (not committed) and deploy with:  npx wrangler deploy
-# Secrets are NEVER written here. Set them with:  npx wrangler secret put <NAME>
+# Cloudflare Worker configuration (committed; contains no secrets).
+# Deployed by .github/workflows/demo-request.yml, which also copies the
+# delivery settings (Resend key, inboxes, From address) from GitHub to the
+# Worker as secrets. Manual alternative:  npx wrangler secret put <NAME>
 name = "funda360-demo-request"
 main = "worker.ts"
 compatibility_date = "2026-10-01"
@@ -7,10 +9,12 @@ compatibility_date = "2026-10-01"
 # Public, non-secret settings.
 [vars]
 ALLOWED_ORIGINS = "https://funda360.aurisnexus.co.za"
-# DEMO_REQUEST_EMAIL_TO = "CONFIRM: inbox that receives demo requests"
-# DEMO_REQUEST_EMAIL_FROM = "Funda360 Website <CONFIRM: address on a domain verified with Resend>"
+# DEMO_REQUEST_EMAIL_TO and DEMO_REQUEST_EMAIL_FROM are set as Worker secrets
+# by the workflow (kept out of the repository so the inbox stays private).
 
-# Secrets (wrangler secret put):
+# Secrets (set by the workflow from GitHub, or with wrangler secret put):
+#   DEMO_REQUEST_EMAIL_TO        inbox(es) that receive demo requests
+#   DEMO_REQUEST_EMAIL_FROM      sender on a domain verified with Resend
 #   RESEND_API_KEY               email delivery through Resend (optional)
 #   DEMO_REQUEST_WEBHOOK_URL     webhook delivery to a CRM or form service (optional)
 #   DEMO_REQUEST_WEBHOOK_SECRET  HMAC signing secret for the webhook (optional)
