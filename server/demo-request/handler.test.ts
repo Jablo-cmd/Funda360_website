@@ -212,3 +212,21 @@ test('rejects email values that could address more than one recipient', async ()
     assert.ok((await res.json()).fields.email);
   }
 });
+
+test('calls the global fetch unbound (Cloudflare Workers reject fetch called as a method)', async () => {
+  const original = globalThis.fetch;
+  const calls: string[] = [];
+  // Mimic Workers: throw if fetch is invoked with a `this` other than the global object.
+  globalThis.fetch = function (this: unknown, input: RequestInfo | URL) {
+    if (this !== undefined && this !== globalThis) throw new TypeError('Illegal invocation');
+    calls.push(String(input));
+    return Promise.resolve(new Response('{}', { status: 200 }));
+  } as typeof fetch;
+  try {
+    const res = await handleDemoRequest(post({ ...valid, requestId: 'req-unbound-01' }), webhookEnv, { log: quiet });
+    assert.equal(res.status, 200);
+    assert.deepEqual(calls, ['https://hooks.example.org/demo']);
+  } finally {
+    globalThis.fetch = original;
+  }
+});

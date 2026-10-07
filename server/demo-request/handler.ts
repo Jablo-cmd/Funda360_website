@@ -81,7 +81,12 @@ export async function handleDemoRequest(request: Request, env: DemoEndpointEnv, 
 }
 
 async function handle(request: Request, env: DemoEndpointEnv, deps: Partial<Deps>): Promise<Response> {
-  const d: Deps = { fetch: deps.fetch ?? fetch, now: deps.now ?? Date.now, log: deps.log ?? ((event, detail) => console.log(JSON.stringify({ event, ...detail }))) };
+  const d: Deps = {
+    // Cloudflare Workers throw "Illegal invocation" when fetch is called as a method (d.fetch()), so wrap it.
+    fetch: deps.fetch ?? ((input, init) => fetch(input, init)),
+    now: deps.now ?? Date.now,
+    log: deps.log ?? ((event, detail) => console.log(JSON.stringify({ event, ...detail }))),
+  };
 
   const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean);
   const origin = request.headers.get('Origin') ?? '';
