@@ -47,7 +47,7 @@ jobs:
           NEXT_PUBLIC_ALLOW_INDEXING: "true"
           # Optional, public (non-secret) values from Settings > Secrets and variables > Actions > Variables.
           # Empty until configured; see README "Production configuration".
-          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT }}
+          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT || 'https://funda360-demo-request.jabuloysiba.workers.dev' }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
           NEXT_PUBLIC_CONTACT_EMAIL: ${{ vars.NEXT_PUBLIC_CONTACT_EMAIL }}
           NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ vars.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
@@ -108,7 +108,7 @@ jobs:
 
       - name: Verify live site (HTTP, SEO, links, assets)
         env:
-          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT }}
+          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT || 'https://funda360-demo-request.jabuloysiba.workers.dev' }}
         run: node scripts/verify-live.mjs https://funda360.aurisnexus.co.za "$GITHUB_SHA"
 
       - name: Install Chromium
@@ -118,6 +118,6 @@ jobs:
         env:
           QA_BASE_URL: https://funda360.aurisnexus.co.za
           CHROMIUM_PATH: ""
-          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT }}
+          NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT: ${{ vars.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT || 'https://funda360-demo-request.jabuloysiba.workers.dev' }}
           NEXT_PUBLIC_APP_LOGIN_URL: https://app.funda360.aurisnexus.co.za/login
         run: node scripts/qa.mjs
