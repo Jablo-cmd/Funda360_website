@@ -403,6 +403,17 @@ try {
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await ctx.newPage();
+    // Never send a real demo request (QA also runs against production after every deploy):
+    // answer the endpoint here. Real delivery is tested by the Worker deploy workflow and qa-demo-e2e.mjs.
+    const endpoint = process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT;
+    let endpointCalls = 0;
+    if (endpoint) {
+      const origin = new URL(endpoint).origin;
+      await page.route((url) => url.origin === origin, (route) => {
+        if (route.request().method() === 'POST') endpointCalls++;
+        return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: '{"ok":true}' });
+      });
+    }
     await page.goto(BASE + '/request-demo', { waitUntil: 'networkidle' });
     await page.locator('header[data-hydrated]').waitFor();
     for (const label of ['Full name (required)', 'School or organisation (required)', 'Work email address (required)', 'Phone number (optional)', 'Your role (required)', 'Number of learners or schools (required)', 'Message (optional)']) {
@@ -440,6 +451,7 @@ try {
     const kind = await status.getAttribute('data-status');
     const expected = process.env.NEXT_PUBLIC_DEMO_REQUEST_ENDPOINT ? 'success' : 'not-configured';
     if (kind !== expected) fail('form', `valid submit produced "${kind}", expected "${expected}"`);
+    if (endpoint && endpointCalls !== 1) fail('form', `expected exactly 1 request to the demo endpoint, got ${endpointCalls}`);
     if (await page.locator('.error-summary').count()) fail('form', 'error summary still visible after valid submit');
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     for (const v of axe.violations) fail('form (after submit)', `axe ${v.id}: ${v.help}`);
