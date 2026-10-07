@@ -1,0 +1,42 @@
+name: Show Resend DNS records
+
+# Manual: fetches the exact DNS records Resend expects for
+# funda360.aurisnexus.co.za (full values, no "[...]" truncation) and their
+# verification status. DNS record values are public; the API key is not
+# printed.
+#
+# Needs the repository secret RESEND_SETUP_KEY: a Resend API key with
+# "Full access" (sending-only keys cannot read domains). Delete that key in
+# Resend once the domain is verified.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  records:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch records from Resend
+        env:
+          RESEND_SETUP_KEY: ${{ secrets.RESEND_SETUP_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RESEND_SETUP_KEY:-}" ]; then
+            echo "::error::Add the repository secret RESEND_SETUP_KEY (a Resend API key with Full access)."
+            exit 1
+          fi
+          auth="Authorization: Bearer $RESEND_SETUP_KEY"
+          domains=$(curl -fsS -H "$auth" https://api.resend.com/domains)
+          id=$(echo "$domains" | jq -r '.data[] | select(.name=="funda360.aurisnexus.co.za") | .id' | head -1)
+          if [ -z "$id" ]; then
+            echo "::error::funda360.aurisnexus.co.za not found in this Resend account."
+            echo "$domains" | jq -r '.data[].name'
+            exit 1
+          fi
+          domain=$(curl -fsS -H "$auth" "https://api.resend.com/domains/$id")
+          echo "Domain status: $(echo "$domain" | jq -r '.status')"
+          echo
+          echo "$domain" | jq -r '.records[] | "----- \(.record) (\(.type)) — status: \(.status)\nName:  \(.name)\nValue: \(.value)\nValue length: \(.value | length)\(if .priority then "\nPriority: \(.priority)" else "" end)\n"'
