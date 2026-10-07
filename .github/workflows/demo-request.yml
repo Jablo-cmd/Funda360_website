@@ -82,8 +82,12 @@ jobs:
         run: |
           set -euo pipefail
           echo "Worker URL: $WORKER_URL"
-          curl -fsS --retry 5 --retry-delay 3 "$WORKER_URL/healthz"
-          echo
+          # A brand-new workers.dev address can return 404 for a minute or two after the first deploy.
+          for attempt in $(seq 1 36); do
+            if curl -fsS "$WORKER_URL/healthz"; then echo; break; fi
+            if [ "$attempt" = 36 ]; then echo "::error::$WORKER_URL/healthz did not respond after 3 minutes."; exit 1; fi
+            echo " (attempt $attempt: not live yet, waiting 5s)"; sleep 5
+          done
           {
             echo "### Demo request Worker deployed"
             echo ""
