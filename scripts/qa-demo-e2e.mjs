@@ -11,7 +11,7 @@
  */
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from 'playwright-core';
 
@@ -61,7 +61,7 @@ start('node', ['server/demo-request/node-server.ts'], {
 });
 start('npx', ['next', 'start', '-p', String(SITE_PORT)], {});
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium' });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined) });
 try {
   await waitFor(`http://localhost:${ENDPOINT_PORT}/`);
   await waitFor(SITE);
