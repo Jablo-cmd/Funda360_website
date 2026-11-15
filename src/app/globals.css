@@ -3546,3 +3546,9 @@ html:not([data-js]) .tour__panel + .tour__panel {
 .with-photo > .grid {
   grid-template-columns: minmax(0, 1fr);
 }
+
+.photo-figure--art img {
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: var(--blue-50);
+}
