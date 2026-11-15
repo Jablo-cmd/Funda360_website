@@ -15,6 +15,8 @@ import { LinkCardList } from '@/components/ui/LinkCardList';
 import { PageHero } from '@/components/ui/PageHero';
 import { PageSchema } from '@/components/ui/PageSchema';
 import { ProductShot, ProductShotGallery } from '@/components/ui/ProductShot';
+import { capabilityPhotos } from '@/content/photos';
+import { PhotoFigure } from '@/components/ui/PhotoFigure';
 import { Section } from '@/components/ui/Section';
 
 /**
@@ -46,14 +48,26 @@ export function CapabilityPageTemplate({ page }: { page: CapabilityPageContent }
       />
 
       <Section id="overview" eyebrow={page.navLabel} heading={page.overview.heading}>
-        <div className="split split--top">
-          <p className="lead">{page.overview.body[0]}</p>
-          <div>
-            {page.overview.body.slice(1).map((p) => (
-              <p key={p}>{p}</p>
-            ))}
+        {capabilityPhotos[page.slug] ? (
+          <div className="with-photo">
+            <PhotoFigure photo={capabilityPhotos[page.slug]} />
+            <div>
+              <p className="lead">{page.overview.body[0]}</p>
+              {page.overview.body.slice(1).map((p) => (
+                <p key={p}>{p}</p>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="split split--top">
+            <p className="lead">{page.overview.body[0]}</p>
+            <div>
+              {page.overview.body.slice(1).map((p) => (
+                <p key={p}>{p}</p>
+              ))}
+            </div>
+          </div>
+        )}
       </Section>
 
       <Section id="context" tone="muted" eyebrow="The challenge" heading={page.problem.heading} intro={page.problem.body}>

@@ -9,7 +9,7 @@ import { ArticleList } from '@/components/ui/ArticleList';
 import { CtaBanner } from '@/components/ui/CtaBanner';
 import { CtaLink } from '@/components/ui/CtaLink';
 import { FeatureList } from '@/components/ui/FeatureList';
-import { PhotoBand } from '@/components/ui/PhotoBand';
+import { PhotoFigure } from '@/components/ui/PhotoFigure';
 import { LinkCardList } from '@/components/ui/LinkCardList';
 import { ProductShot } from '@/components/ui/ProductShot';
 import { Section } from '@/components/ui/Section';
@@ -70,10 +70,11 @@ export default function HomePage() {
       </section>
 
       {/* 2. Introduction */}
-      <Section id={homePage.introduction.id} eyebrow="Funda360" heading={homePage.introduction.heading}>
-        <div className="split split--top">
-          <p className="lead">{homePage.introduction.body[0]}</p>
+      <Section id={homePage.introduction.id} tone="warm" eyebrow="Funda360" heading={homePage.introduction.heading}>
+        <div className="with-photo">
+          <PhotoFigure photo="parentEvening" />
           <div>
+            <p className="lead">{homePage.introduction.body[0]}</p>
             {homePage.introduction.body.slice(1).map((p) => (
               <p key={p}>{p}</p>
             ))}
@@ -101,34 +102,6 @@ export default function HomePage() {
           variant="audience"
           columns={2}
           items={solutionPages.map((s) => ({ label: s.navLabel, title: s.tagline, description: s.summary, meta: s.audience, href: `/solutions/${s.slug}` }))}
-        />
-      </Section>
-
-      {/* 3c. People: schools run on teachers, parents and leaders */}
-      <Section
-        id="people"
-        tone="warm"
-        eyebrow="Built around people"
-        heading="Schools run on teachers, parents and leaders"
-        intro="Funda360 gives each of them the same clear picture, so the conversation in the classroom, the parent evening and the leadership meeting starts from the same facts."
-      >
-        <PhotoBand
-          photos={[
-            {
-              src: '/photos/parent-evening.webp',
-              alt: 'A school leader speaks at a podium to parents and staff beneath a screen reading Together for Our Learners.',
-              width: 1400,
-              height: 933,
-              caption: 'Parents: one clear view of how their child is doing.',
-            },
-            {
-              src: '/photos/engagement-meeting.webp',
-              alt: 'A school leader with a microphone addresses parents and a panel of teachers at a parent and teacher meeting.',
-              width: 1400,
-              height: 788,
-              caption: 'Leaders: the numbers behind every conversation.',
-            },
-          ]}
         />
       </Section>
 
