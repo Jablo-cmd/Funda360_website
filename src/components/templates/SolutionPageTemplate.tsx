@@ -12,6 +12,8 @@ import { FeatureList } from '@/components/ui/FeatureList';
 import { LinkCardList } from '@/components/ui/LinkCardList';
 import { PageHero } from '@/components/ui/PageHero';
 import { ProductShot, ProductShotGallery } from '@/components/ui/ProductShot';
+import { solutionPhotos } from '@/content/photos';
+import { PhotoFigure } from '@/components/ui/PhotoFigure';
 import { Section } from '@/components/ui/Section';
 import { ArticleList } from '@/components/ui/ArticleList';
 import { PageSchema } from '@/components/ui/PageSchema';
@@ -56,7 +58,14 @@ export function SolutionPageTemplate({ page }: { page: SolutionPageContent }) {
       </PageHero>
 
       <Section id="why" eyebrow={page.navLabel} heading={page.why.heading}>
-        <FeatureList items={page.why.points} columns={3} />
+        {solutionPhotos[page.slug] ? (
+          <div className="with-photo">
+            <PhotoFigure photo={solutionPhotos[page.slug]} />
+            <FeatureList items={page.why.points} />
+          </div>
+        ) : (
+          <FeatureList items={page.why.points} columns={3} />
+        )}
       </Section>
 
       {page.sections.map((section, index) => (
