@@ -6,7 +6,7 @@ type Props = {
   /** Heading level. Page sections are h2; nest with 3 inside another section. */
   level?: 2 | 3;
   /** Background treatment: muted (slate-50), navy (trust/story), intelligence (teal tint), available, roadmap. */
-  tone?: 'muted' | 'navy' | 'intelligence' | 'available' | 'roadmap';
+  tone?: 'muted' | 'warm' | 'navy' | 'intelligence' | 'available' | 'roadmap';
   /** Centre the section header. */
   center?: boolean;
   /** Use the 1320px showcase width. */

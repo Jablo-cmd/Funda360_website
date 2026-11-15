@@ -3376,3 +3376,187 @@ html:not([data-js]) .tour__panel + .tour__panel {
   font-size: var(--fs-small);
   color: var(--on-dark-muted);
 }
+
+/* ================================================================== */
+/* Colour layer: warm gold accent, tinted bands, photography           */
+/* Gold is decorative (rules, glows, borders) or text on navy only.    */
+/* ================================================================== */
+:root {
+  --gold-500: #f2b134;
+  --gold-300: #f8d27a;
+  --gold-100: #fdf1d3;
+  --gold-50: #fffaf0;
+  --sky-100: #dbeafe;
+}
+
+/* Gold rule before every eyebrow */
+.eyebrow::before {
+  content: '';
+  width: 1.5rem;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gold-500);
+  flex: none;
+}
+
+.section__header--center .eyebrow::after {
+  content: '';
+  width: 1.5rem;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gold-500);
+  flex: none;
+}
+
+/* Tinted bands instead of flat grey */
+.section[data-tone='muted'] {
+  background: linear-gradient(180deg, var(--blue-50), var(--white) 120%);
+  border-block-color: var(--sky-100);
+}
+
+.section[data-tone='warm'] {
+  background:
+    radial-gradient(50% 60% at 0% 0%, rgba(242, 177, 52, 0.16), transparent 70%),
+    radial-gradient(50% 60% at 100% 100%, rgba(37, 99, 235, 0.1), transparent 70%),
+    var(--gold-50);
+  border-block: 1px solid var(--gold-100);
+}
+
+/* Hero: richer blue, teal and gold glows */
+.home-hero {
+  background:
+    radial-gradient(55% 55% at 85% 5%, rgba(37, 99, 235, 0.16), transparent 70%),
+    radial-gradient(40% 45% at 5% 0%, rgba(242, 177, 52, 0.18), transparent 70%),
+    radial-gradient(45% 40% at 50% 100%, rgba(20, 184, 166, 0.1), transparent 70%),
+    linear-gradient(180deg, var(--blue-50) 0%, var(--white) 100%);
+}
+
+.home-hero__visual::before {
+  background:
+    radial-gradient(70% 90% at 90% 0%, rgba(37, 99, 235, 0.45), transparent 65%),
+    radial-gradient(40% 60% at 0% 100%, rgba(242, 177, 52, 0.22), transparent 70%),
+    var(--navy-900);
+}
+
+/* Navy bands and closing CTA pick up a gold glow */
+.section[data-tone='navy'] {
+  background:
+    radial-gradient(120% 80% at 85% 0%, rgba(37, 99, 235, 0.22), transparent 60%),
+    radial-gradient(60% 50% at 0% 100%, rgba(242, 177, 52, 0.1), transparent 70%),
+    var(--navy-900);
+}
+
+[data-tone='navy'] .eyebrow::before,
+[data-tone='cta'] .eyebrow::before {
+  background: var(--gold-300);
+}
+
+.cta-panel {
+  background:
+    radial-gradient(80% 120% at 100% 0%, rgba(37, 99, 235, 0.4), transparent 60%),
+    radial-gradient(50% 80% at 0% 100%, rgba(242, 177, 52, 0.22), transparent 70%),
+    var(--navy-900);
+  border-top: 4px solid var(--gold-500);
+}
+
+/* Photography band */
+.photo-band {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.photo-band__item {
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--navy-900);
+  box-shadow: 0 18px 40px -22px rgba(11, 31, 58, 0.55);
+}
+
+.photo-band__item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-band__item figcaption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: var(--space-6) var(--space-5) var(--space-4);
+  background: linear-gradient(180deg, transparent, rgba(11, 31, 58, 0.92));
+  border-bottom: 4px solid var(--gold-500);
+  color: var(--white);
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.photo-band__lead img {
+  aspect-ratio: 16 / 10;
+}
+
+.photo-band__support img {
+  aspect-ratio: 16 / 10;
+}
+
+.photo-band__note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate-700);
+}
+
+@media (min-width: 48rem) {
+  .photo-band {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .photo-band__lead {
+    grid-column: 1 / -1;
+  }
+
+  .photo-band__lead img {
+    aspect-ratio: 21 / 9;
+  }
+}
+
+/* Hero photograph (large screens only; decorative) */
+.home-hero__photo {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .home-hero__top {
+    position: relative;
+  }
+
+  .home-hero__copy {
+    position: relative;
+    z-index: 1;
+    max-width: 38rem;
+  }
+
+  .home-hero__photo {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: var(--side);
+    width: min(38vw, 30rem);
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border-bottom: 5px solid var(--gold-500);
+    box-shadow: 0 30px 60px -28px rgba(11, 31, 58, 0.6);
+  }
+
+  .home-hero__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 60% 50%;
+  }
+}
